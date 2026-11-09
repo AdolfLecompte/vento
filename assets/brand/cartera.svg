@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- the pocket on the right of the wallet is cut out, so the background shows through it -->
+    <mask id="bolsillo" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <rect x="560" y="470" width="300" height="150" rx="75" fill="#000"/>
+    </mask>
+  </defs>
+  <!-- scaled to stay inside Android's adaptive-icon safe zone -->
+  <g transform="translate(512 512) scale(.82) translate(-512 -512)">
+    <rect x="262" y="262" width="440" height="160" rx="44" fill="#fff" opacity=".55" transform="rotate(-8 482 342)"/>
+    <rect x="182" y="340" width="660" height="440" rx="100" fill="#fff" mask="url(#bolsillo)"/>
+    <circle cx="660" cy="545" r="30" fill="#fff"/>
+  </g>
+</svg>

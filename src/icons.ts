@@ -1,0 +1,27 @@
+// Phosphor icons, imported one by one to keep the bundle small.
+export { ReceiptIcon } from 'phosphor-react-native/src/icons/Receipt';
+export { PackageIcon } from 'phosphor-react-native/src/icons/Package';
+export { UsersIcon } from 'phosphor-react-native/src/icons/Users';
+export { PlusIcon } from 'phosphor-react-native/src/icons/Plus';
+export { MinusIcon } from 'phosphor-react-native/src/icons/Minus';
+export { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+export { CheckCircleIcon } from 'phosphor-react-native/src/icons/CheckCircle';
+export { TruckIcon } from 'phosphor-react-native/src/icons/Truck';
+export { TrashIcon } from 'phosphor-react-native/src/icons/Trash';
+export { HandCoinsIcon } from 'phosphor-react-native/src/icons/HandCoins';
+export { MoneyIcon } from 'phosphor-react-native/src/icons/Money';
+export { BankIcon } from 'phosphor-react-native/src/icons/Bank';
+export { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
+export { WalletIcon } from 'phosphor-react-native/src/icons/Wallet';
+export { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
+export { FloppyDiskIcon } from 'phosphor-react-native/src/icons/FloppyDisk';
+export { ArrowCounterClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowCounterClockwise';
+export { FileCsvIcon } from 'phosphor-react-native/src/icons/FileCsv';
+export { InfoIcon } from 'phosphor-react-native/src/icons/Info';
+export { HouseIcon } from 'phosphor-react-native/src/icons/House';
+export { DotsThreeCircleIcon } from 'phosphor-react-native/src/icons/DotsThreeCircle';
+export { LockSimpleIcon } from 'phosphor-react-native/src/icons/LockSimple';
+export { BellIcon } from 'phosphor-react-native/src/icons/Bell';
+export { FolderSimpleIcon } from 'phosphor-react-native/src/icons/FolderSimple';
+export { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
+export { PaletteIcon } from 'phosphor-react-native/src/icons/Palette';
