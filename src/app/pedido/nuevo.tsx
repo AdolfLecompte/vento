@@ -5,6 +5,7 @@ import { BackHandler, ScrollView, View } from 'react-native';
 import { bloqueado, ganancia, total as totalDe } from '@/calc';
 import { FechaCampo } from '@/Calendario';
 import { Borrador, Cliente, getPedido, guardarPedido, hoy, Linea, listClientes, listProductos, MEDIOS, Producto } from '@/db';
+import { coincide } from '@/busqueda';
 import { corta, esFechaISO } from '@/fecha';
 import { notify } from '@/feedback';
 import { CheckCircleIcon, MinusIcon, PlusIcon, TrashIcon } from '@/icons';
@@ -13,7 +14,7 @@ import { Guia } from '@/Mascota';
 import { useColors, useT } from '@/tema';
 import { fraseAsistente } from '@/voz';
 import {
-  animar, Appear, Avatar, Bar, Body, Button, Card, Chip, Field, Header, Label, money, MoneyField, Option, Row, RoundBtn,
+  animar, Appear, Avatar, Bar, Body, Button, Buscador, Card, Chip, Header, Label, money, MoneyField, Option, ProductoIcono, Row, RoundBtn,
   Screen, Segment, Small, Sub, Tap, Title,
 } from '@/ui';
 
@@ -63,6 +64,7 @@ export default function PedidoWizard() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [prods, setProds] = useState<Producto[]>([]);
   const [q, setQ] = useState('');
+  const [qp, setQp] = useState(''); // product search of step 2
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [nuevo, setNuevo] = useState('');
   const [lineas, setLineas] = useState<Linea[]>([]);
@@ -134,9 +136,10 @@ export default function PedidoWizard() {
 
   // Step 1: choose a client, or type to search / create one.
   const texto = q.trim();
-  const filtrados = clientes.filter((c) => c.nombre.toLowerCase().includes(texto.toLowerCase()));
+  const filtrados = clientes.filter((c) => coincide(texto, c.nombre));
   const existe = clientes.some((c) => c.nombre.toLowerCase() === texto.toLowerCase());
-  const cats = [...new Set(prods.map((p) => p.categoria ?? ''))].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)));
+  const visibles = prods.filter((p) => coincide(qp, p.nombre, p.categoria));
+  const cats = [...new Set(visibles.map((p) => p.categoria ?? ''))].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)));
 
   const titulos = [t('¿Quién lo pidió?'), t('¿Qué pidió?'), editId ? t('Fecha y entrega') : t('Fecha, pago y entrega'), t('Revisa el pedido')];
   const ultimo = paso === PASOS;
@@ -156,7 +159,7 @@ export default function PedidoWizard() {
 
           {paso === 1 && (
             <>
-              <Field placeholder={t('Buscar o escribir un cliente nuevo')} value={q} onChangeText={setQ} />
+              <Buscador placeholder={t('Buscar o escribir un cliente nuevo')} value={q} onChange={setQ} />
               {texto !== '' && !existe && (
                 <Option label={t('Crear {nombre}', { nombre: texto })} selected={clienteId === null && nuevo.trim() === texto} onPress={() => { setClienteId(null); setNuevo(texto); }}>
                   <Row>
@@ -189,16 +192,19 @@ export default function PedidoWizard() {
               </View>
             ) : (
               <>
+                <Buscador placeholder={t('Buscar por nombre o categoría')} value={qp} onChange={setQp} />
                 <Body color={colors.muted}>{t('Toca un producto para agregarlo.')}</Body>
+                {visibles.length === 0 && <Body color={colors.muted}>{t('No encontré nada con «{q}».', { q: qp.trim() })}</Body>}
                 {cats.map((c) => (
                   <View key={c || 'sin'} style={{ gap: space.sm }}>
                     {cats.length > 1 && <Label color={colors.muted}>{c || t('Sin categoría')}</Label>}
-                    {prods.filter((p) => (p.categoria ?? '') === c).map((p) => {
+                    {visibles.filter((p) => (p.categoria ?? '') === c).map((p) => {
                       const n = qty(p.id);
                       const l = lineas.find((x) => x.producto_id === p.id);
                       return (
                         <Option key={p.id} label={p.nombre} selected={n > 0} onPress={n === 0 ? () => setQty(p, 1) : undefined}>
                           <Row>
+                            <ProductoIcono />
                             <View style={{ flex: 1 }}>
                               <Sub>{p.nombre}</Sub>
                               <Small>{money(l ? l.precio_unit : p.precio)} c/u</Small>

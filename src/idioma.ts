@@ -386,4 +386,5 @@ export const EN: Record<string, string> = {
   'Descargar': 'Download',
   'Más tarde': 'Later',
   'Entregados y pagados': 'Delivered and paid',
+  '{n} vendidos': '{n} sold',
 };

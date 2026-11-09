@@ -3,6 +3,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { gananciaPorProducto, hoy, listDeudores, listPedidos, PedidoRow } from '@/db';
+import { TrophyIcon } from '@/icons';
 import { PedidoCard } from '@/PedidoCard';
 import { space } from '@/theme';
 import { Burbuja, Mascota } from '@/Mascota';
@@ -126,18 +127,29 @@ export default function Inicio() {
         {prods.length > 0 && (
           <>
             <Seccion titulo={t('Lo que más te deja')} />
-            <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: space.md, gap: space.md }}>
-              {prods.slice(0, 3).map((p) => (
-                <View key={p.nombre} style={{ gap: 4 }}>
-                  <Row>
-                    <View style={{ flex: 1 }}><Label lines={1}>{p.nombre}</Label></View>
-                    <Small>×{p.unidades}</Small>
-                    <Label>{money(p.ganancia)}</Label>
-                  </Row>
-                  <Bar value={p.ganancia / max} track={colors.bg} />
-                </View>
-              ))}
-            </View>
+            {/* podium: the best seller gets a filled card; the other two sit below it with their share of the best one */}
+            {prods.slice(0, 3).map((p, i) => {
+              const primero = i === 0;
+              return (
+                <Appear key={p.nombre} delay={i * 80}>
+                  <View style={{ backgroundColor: primero ? colors.primary : colors.surface, borderRadius: 24, padding: space.md, gap: space.sm }}>
+                    <Row>
+                      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: primero ? colors.onPrimary : colors.soft, alignItems: 'center', justifyContent: 'center' }}>
+                        {primero
+                          ? <TrophyIcon size={24} color={colors.primary} weight="fill" />
+                          : <Sub color={colors.primary}>{i + 1}</Sub>}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Sub lines={1} color={primero ? colors.onPrimary : undefined}>{p.nombre}</Sub>
+                        <Small color={primero ? colors.onPrimary : colors.muted}>{t('{n} vendidos', { n: p.unidades })}</Small>
+                      </View>
+                      <Sub color={primero ? colors.onPrimary : colors.primary}>{money(p.ganancia)}</Sub>
+                    </Row>
+                    <Bar value={p.ganancia / max} color={primero ? colors.onPrimary : colors.primary} track={primero ? colors.primaryPressed : colors.bg} />
+                  </View>
+                </Appear>
+              );
+            })}
           </>
         )}
       </ScrollView>

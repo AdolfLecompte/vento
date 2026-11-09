@@ -5,7 +5,7 @@ import Animated, {
   Easing, interpolateColor, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CaretLeftIcon, MagnifyingGlassIcon, PlusIcon, XIcon } from '@/icons';
+import { CaretLeftIcon, MagnifyingGlassIcon, PlusIcon, ShoppingBagIcon, XIcon } from '@/icons';
 import { miles, money, num } from '@/formato';
 import { alfa } from '@/paleta';
 import { useColors, useT } from '@/tema';
@@ -342,3 +342,13 @@ const s = StyleSheet.create({
   fab: { height: 64, borderRadius: 32, overflow: 'hidden', elevation: 6, shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   bar: { height: 8, borderRadius: radius.pill, overflow: 'hidden' },
 });
+
+// Round badge for a product, the sibling of the box on orders.
+export function ProductoIcono() {
+  const colors = useColors();
+  return (
+    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}>
+      <ShoppingBagIcon size={24} color={colors.primary} weight="duotone" />
+    </View>
+  );
+}

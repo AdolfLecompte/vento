@@ -8,7 +8,7 @@ import { space } from '@/theme';
 import { Vacio } from '@/Mascota';
 import { coincide } from '@/busqueda';
 import { useColors, useT } from '@/tema';
-import { animar, Appear, Buscador, Card, Chip, Fab, Header, money, Pill, Row, Screen, Small, Sub, Tap } from '@/ui';
+import { animar, Appear, Buscador, Card, Chip, Fab, Header, money, Pill, ProductoIcono, Row, Screen, Small, Sub, Tap } from '@/ui';
 
 const SIN = 'Sin categoría';
 
@@ -54,6 +54,7 @@ export default function Productos() {
             <Tap onPress={() => router.push(`/producto/${p.id}`)} label={p.nombre}>
               <Card>
                 <Row>
+                  <ProductoIcono />
                   <View style={{ flex: 1, gap: 4 }}>
                     <Sub>{p.nombre}</Sub>
                     <Small>{t('Me cuesta {costo} · lo vendo en {precio}', { costo: money(p.costo), precio: money(p.precio) })}</Small>
