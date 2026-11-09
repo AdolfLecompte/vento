@@ -4,7 +4,7 @@
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AdolfoLecompteDev/vento.git"
+    "url": "git+https://github.com/AdolfLecompte/VENTO.git"
   },
   "description": "Vento: a sales notebook for Android (orders, payments, deliveries and profit).",
   "main": "expo-router/entry",

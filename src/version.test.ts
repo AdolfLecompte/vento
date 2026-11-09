@@ -35,6 +35,12 @@ test('leerRelease acepta lo esperado y rechaza enlaces que salen del repositorio
   assert.equal(leerRelease(null, REPO), null);
 });
 
+test('leerRelease no distingue mayusculas en dueno/repo (GitHub tampoco), pero sigue rechazando otros repos', () => {
+  assert.equal(leerRelease(release(), 'DUENO/Vento')?.version, '1.1.0');
+  assert.ok(leerRelease(release(), 'DUENO/Vento')?.apk);
+  assert.equal(leerRelease(release(), 'otro/vento'), null);
+});
+
 test('consultar: version nueva, al dia, sin versiones, y todo lo que pueda fallar', async () => {
   assert.equal((await consultar(REPO, '1.0.0', json(release()))).estado, 'nueva');
   assert.equal((await consultar(REPO, '1.1.0', json(release()))).estado, 'al-dia');

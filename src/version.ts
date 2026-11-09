@@ -17,15 +17,18 @@ export function esMasNueva(remota: string, local: string) {
 export type Release = { version: string; notas: string; pagina: string; apk: string | null };
 export type Resultado = { estado: 'nueva' | 'al-dia' | 'sin-versiones' | 'error'; release?: Release };
 
+// GitHub ignores case in owner/repo names (the canonical spelling may differ from what package.json says).
+const dentro = (url: string, prefijo: string) => url.toLowerCase().startsWith(prefijo.toLowerCase());
+
 // The release JSON comes from the network: accept only what we expect, and only links that stay inside this repo.
 export function leerRelease(json: unknown, repo: string): Release | null {
   const j = json as { tag_name?: unknown; html_url?: unknown; body?: unknown; assets?: unknown } | null;
   if (!j || typeof j.tag_name !== 'string' || typeof j.html_url !== 'string') return null;
   const pagina = j.html_url;
-  if (!pagina.startsWith(`https://github.com/${repo}/`)) return null;
+  if (!dentro(pagina, `https://github.com/${repo}/`)) return null;
   const assets = Array.isArray(j.assets) ? (j.assets as { name?: unknown; browser_download_url?: unknown }[]) : [];
   const apk = assets.find((a) => typeof a.name === 'string' && a.name.endsWith('.apk') && typeof a.browser_download_url === 'string'
-    && a.browser_download_url.startsWith(`https://github.com/${repo}/releases/download/`));
+    && dentro(a.browser_download_url, `https://github.com/${repo}/releases/download/`));
   return { version: j.tag_name.replace(/^v/i, ''), notas: typeof j.body === 'string' ? j.body : '', pagina, apk: (apk?.browser_download_url as string | undefined) ?? null };
 }
 
