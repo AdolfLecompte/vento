@@ -2,6 +2,10 @@
   "name": "vento",
   "version": "1.0.0",
   "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdolfoLecompteDev/vento.git"
+  },
   "description": "Vento: a sales notebook for Android (orders, payments, deliveries and profit).",
   "main": "expo-router/entry",
   "dependencies": {
@@ -38,8 +42,11 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "lint": "expo lint"
+    "android": "expo run:android",
+    "lint": "expo lint",
+    "apk": "./scripts/build-apk.sh",
+    "preview": "node scripts/preview.mjs",
+    "llave": "./scripts/crear-llave.sh"
   },
   "private": true
 }
