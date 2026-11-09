@@ -1,4 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { esPreferenciaIdioma } from './idioma.ts';
+import { esMascota, MASCOTA_INICIAL } from './mascotas.ts';
+import { esAcento, esPreferencia } from './paleta.ts';
+import type { Estilo } from './respaldo.ts';
 
 // Nequi/Daviplata are transfers too; old payments saved with those names still display.
 export const MEDIOS = ['Efectivo', 'Transferencia'];
@@ -160,3 +164,12 @@ export const listPorEntregar = (db: SQLiteDatabase) =>
     `SELECT c.nombre, COUNT(*) AS n FROM pedidos p JOIN clientes c ON c.id=p.cliente_id
      WHERE p.entregado=0 GROUP BY c.id ORDER BY n DESC, c.nombre`,
   );
+
+// The saved look of the app, with a default for anything never chosen or no longer valid. The theme loads from here
+// and backups save it.
+export async function leerEstilo(db: SQLiteDatabase): Promise<Required<Estilo>> {
+  const [m, a, ma, i] = await Promise.all([
+    getAjuste(db, 'tema_modo', 'claro'), getAjuste(db, 'tema_acento', 'verde'), getAjuste(db, 'mascota', MASCOTA_INICIAL), getAjuste(db, 'idioma', 'auto'),
+  ]);
+  return { modo: esPreferencia(m) ? m : 'claro', acento: esAcento(a) ? a : 'verde', mascota: esMascota(ma) ? ma : MASCOTA_INICIAL, idioma: esPreferenciaIdioma(i) ? i : 'auto' };
+}

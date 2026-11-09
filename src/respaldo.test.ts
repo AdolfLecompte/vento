@@ -12,7 +12,7 @@ const t: Tablas = {
 };
 
 test('respaldo: ida y vuelta', () => {
-  assert.deepEqual(validarRespaldo(armarRespaldo(t, '2026-11-08')), t);
+  assert.deepEqual(validarRespaldo(armarRespaldo(t, '2026-11-08')), { ...t, estilo: {} }); // no style given = none restored
 });
 
 test('respaldo: rechaza archivos ajenos o con tipos malos', () => {

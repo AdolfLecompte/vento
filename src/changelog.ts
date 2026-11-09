@@ -16,6 +16,7 @@ export const CHANGELOG: Entrada[] = [
         'Los botones de filtro ocupan toda la línea en vez de quedarse pegados a la izquierda.',
         'Nuevo icono de la app: el nombre VENTO, en lugar de la billetera.',
         'El aviso de versiones nuevas ahora busca en el repositorio correcto de GitHub.',
+        'Las copias de seguridad guardan también tu estilo (color, modo, mascota e idioma) y lo devuelven al restaurar.',
       ],
     },
     en: {
@@ -25,6 +26,7 @@ export const CHANGELOG: Entrada[] = [
         'The filter buttons fill the whole line instead of hugging the left edge.',
         'New app icon: the VENTO name, instead of the wallet.',
         'The new-version alert now looks in the right GitHub repository.',
+        'Backups also keep your style (colour, mode, mascot and language) and bring it back on restore.',
       ],
     },
   },

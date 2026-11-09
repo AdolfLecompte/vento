@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { base } from './db-memoria.ts';
-import { migrate } from './db.ts';
+import { leerEstilo, migrate } from './db.ts';
+import { MASCOTA_INICIAL, MASCOTAS } from './mascotas.ts';
 import { aplicarTablas, armarRespaldo, leerTablas, validarRespaldo } from './respaldo.ts';
 
 const SEMILLA = `
@@ -38,4 +39,27 @@ test('respaldo real: restaurar en una base vacia y con cero filas funciona', asy
   const b = base(); await migrate(b.db as never); b.sq.exec(SEMILLA);
   await aplicarTablas(b.db, validarRespaldo(armarRespaldo(vacia, 'x')));
   assert.deepEqual(await leerTablas(b.db), vacia);
+});
+
+test('el estilo (color, modo, mascota, idioma) viaja en la copia', async () => {
+  const a = base(); await migrate(a.db as never);
+  const estilo = { modo: 'oscuro', acento: 'verde', mascota: MASCOTAS[1].id, idioma: 'en' } as const;
+  const r = validarRespaldo(armarRespaldo(await leerTablas(a.db), 'x', estilo));
+  assert.deepEqual(r.estilo, estilo);
+});
+
+test('una copia vieja sin estilo se restaura, y un valor desconocido se ignora sin bloquear', async () => {
+  const a = base(); await migrate(a.db as never);
+  const { estilo: _, ...sinEstilo } = JSON.parse(armarRespaldo(await leerTablas(a.db), 'x'));
+  assert.deepEqual(validarRespaldo(JSON.stringify(sinEstilo)).estilo, {});
+  const raro = { ...sinEstilo, estilo: { modo: 'neon', acento: 'verde', mascota: 'dragon', idioma: 7 } };
+  assert.deepEqual(validarRespaldo(JSON.stringify(raro)).estilo, { acento: 'verde' }); // only the valid field survives
+});
+
+test('leerEstilo devuelve los valores guardados y un valor por defecto para lo demas', async () => {
+  const a = base(); await migrate(a.db as never);
+  assert.deepEqual(await leerEstilo(a.db as never), { modo: 'claro', acento: 'verde', mascota: MASCOTA_INICIAL, idioma: 'auto' });
+  a.sq.exec("INSERT INTO ajustes VALUES ('tema_modo','oscuro'),('idioma','xx')");
+  const e = await leerEstilo(a.db as never);
+  assert.equal(e.modo, 'oscuro'); assert.equal(e.idioma, 'auto'); // an invalid saved value falls back
 });

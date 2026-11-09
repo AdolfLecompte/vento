@@ -18,7 +18,7 @@ Libreta de compraventa para Android. Anotas quién te pidió qué, si ya pagó (
 - **Idioma:** español e inglés. Se elige en Más → Apariencia e idioma, o sigue el idioma del teléfono.
 - **Personalización:** color de la app (6 a elegir), modo claro, oscuro o automático, y una mascota (pan, bebida, billete, moneda, bolsa o cartera) que te da las noticias: te saluda en Inicio, te dice quién te debe, firma el recordatorio, te acompaña con frases mientras anotas y sonríe cuando guardas algo.
 - **Recordatorio diario** (opcional): una notificación a la hora que elijas con quién te debe y cuántos pedidos faltan. El detalle queda oculto en la pantalla bloqueada.
-- **Copias de seguridad:** se guardan en una carpeta llamada `vento` que tú eliges, a mano o de forma automática (cada día, semana o mes). También puedes restaurar una copia, enviarla a otra app o exportar tus ventas a Excel / Google Sheets (CSV).
+- **Copias de seguridad:** se guardan en una carpeta llamada `vento` que tú eliges, a mano o de forma automática (cada día, semana o mes). La copia guarda también tu estilo (color, modo, mascota e idioma) y lo devuelve al restaurar. También puedes restaurar una copia, enviarla a otra app o exportar tus ventas a Excel / Google Sheets (CSV).
 
 ## Descargar
 
@@ -90,7 +90,7 @@ A sales notebook for Android. You write down who ordered what, whether they have
 - **Language:** Spanish and English. Pick it in More → Appearance and language, or let it follow your phone.
 - **Personalization:** pick the app colour (6 to choose from), light, dark or automatic mode, and a mascot (bread, drink, banknote, coin, bag or wallet) that gives you the news: it greets you on Home, tells you who owes you, signs the reminder, walks you through forms with short lines and smiles when you save something.
 - **Daily reminder** (optional): a notification at the time you choose listing who owes you and how many orders are left to deliver. The details stay hidden on the lock screen.
-- **Backups:** saved in a folder called `vento` that you pick, by hand or automatically (daily, weekly or monthly). You can also restore a backup, send it to another app, or export your sales to Excel / Google Sheets (CSV).
+- **Backups:** saved in a folder called `vento` that you pick, by hand or automatically (daily, weekly or monthly). A backup also keeps your style (colour, mode, mascot and language) and brings it back on restore. You can also restore a backup, send it to another app, or export your sales to Excel / Google Sheets (CSV).
 
 ### Permissions and privacy
 

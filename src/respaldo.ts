@@ -1,5 +1,7 @@
 // Pure backup format + CSV (no React Native imports, so it runs under `node --test`).
-import type { T } from './idioma.ts';
+import { esPreferenciaIdioma, type PreferenciaIdioma, type T } from './idioma.ts';
+import { esMascota, type MascotaId } from './mascotas.ts';
+import { esAcento, esPreferencia, type AcentoId, type Preferencia } from './paleta.ts';
 type Cell = string | number | null;
 export type Fila = Record<string, Cell>;
 export type Tablas = Record<'clientes' | 'productos' | 'pedidos' | 'pedido_items' | 'pagos', Fila[]>;
@@ -18,15 +20,31 @@ const OPCIONAL = new Set(['telefono', 'categoria']);
 const MAL = 'Ese archivo no es una copia de Vento';
 
 // The marker stays 'compraventa' (the app's first name) so backups made before the rename still restore.
-export const armarRespaldo = (t: Tablas, fecha: string) =>
-  JSON.stringify({ app: 'compraventa', version: 1, fecha, ...t });
+// How the app looks (colour, mode, mascot, language) travels in the backup too. Every field is optional: old backups
+// have none, and a field with an unknown value is ignored instead of blocking the restore.
+export type Estilo = { modo?: Preferencia; acento?: AcentoId; mascota?: MascotaId; idioma?: PreferenciaIdioma };
+export type Respaldo = Tablas & { estilo: Estilo };
+
+export const armarRespaldo = (t: Tablas, fecha: string, estilo: Estilo = {}) =>
+  JSON.stringify({ app: 'compraventa', version: 1, fecha, estilo, ...t });
+
+function estiloDe(v: unknown): Estilo {
+  if (!v || typeof v !== 'object') return {};
+  const e = v as Record<string, unknown>;
+  const s = (k: string) => (typeof e[k] === 'string' ? (e[k] as string) : '');
+  const modo = s('modo'), acento = s('acento'), mascota = s('mascota'), idioma = s('idioma');
+  return {
+    ...(esPreferencia(modo) ? { modo } : {}), ...(esAcento(acento) ? { acento } : {}),
+    ...(esMascota(mascota) ? { mascota } : {}), ...(esPreferenciaIdioma(idioma) ? { idioma } : {}),
+  };
+}
 
 // The file is untrusted input: check shape and types before it touches the database.
-export function validarRespaldo(texto: string): Tablas {
+export function validarRespaldo(texto: string): Respaldo {
   let o: Record<string, unknown>;
   try { o = JSON.parse(texto); } catch { throw new Error(MAL); }
   if (!o || o.app !== 'compraventa' || o.version !== 1) throw new Error(MAL);
-  const out = {} as Tablas;
+  const out = { estilo: estiloDe(o.estilo) } as Respaldo;
   for (const [tabla, cols] of Object.entries(COLUMNAS) as [keyof Tablas, string[]][]) {
     const filas = o[tabla];
     if (!Array.isArray(filas)) throw new Error(MAL);

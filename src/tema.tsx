@@ -2,10 +2,10 @@ import * as SystemUI from 'expo-system-ui';
 import { useSQLiteContext } from 'expo-sqlite';
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
-import { getAjuste, setAjuste } from '@/db';
-import { crearT, esPreferenciaIdioma, idiomaDelSistema, Lang, PreferenciaIdioma, resolverIdioma, T } from '@/idioma';
-import { MASCOTA_INICIAL, MASCOTAS, MascotaId } from '@/mascotas';
-import { ACENTOS, AcentoId, esAcento, esPreferencia, Paleta, paleta, Preferencia } from '@/paleta';
+import { leerEstilo, setAjuste } from '@/db';
+import { crearT, idiomaDelSistema, Lang, PreferenciaIdioma, resolverIdioma, T } from '@/idioma';
+import { MascotaId } from '@/mascotas';
+import { ACENTOS, AcentoId, Paleta, paleta, Preferencia } from '@/paleta';
 
 type Prefs = { modo: Preferencia; acento: AcentoId; mascota: MascotaId; idioma: PreferenciaIdioma };
 type Tema = Prefs & {
@@ -17,7 +17,6 @@ type Tema = Prefs & {
 };
 
 const Ctx = createContext<Tema | null>(null);
-const esMascotaGuardada = (x: string): x is MascotaId => MASCOTAS.some((m) => m.id === x);
 
 // Colour, light/dark mode and mascot, kept in the settings table. Everything below reads it through context,
 // so changing it repaints the whole app in place.
@@ -26,12 +25,7 @@ export function TemaProvider({ children }: { children: ReactNode }) {
   const sistema = useColorScheme();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const [m, a, ma, i] = await Promise.all([getAjuste(db, 'tema_modo', 'claro'), getAjuste(db, 'tema_acento', 'verde'), getAjuste(db, 'mascota', MASCOTA_INICIAL), getAjuste(db, 'idioma', 'auto')]);
-      setPrefs({ modo: esPreferencia(m) ? m : 'claro', acento: esAcento(a) ? a : 'verde', mascota: esMascotaGuardada(ma) ? ma : MASCOTA_INICIAL, idioma: esPreferenciaIdioma(i) ? i : 'auto' });
-    })();
-  }, [db]);
+  useEffect(() => { leerEstilo(db).then(setPrefs); }, [db]);
 
   const oscuro = prefs?.modo === 'oscuro' || (prefs?.modo === 'auto' && sistema === 'dark');
   const hexAcento = (ACENTOS.find((a) => a.id === prefs?.acento) ?? ACENTOS[0]).hex;
@@ -49,7 +43,7 @@ export function TemaProvider({ children }: { children: ReactNode }) {
 
   if (!prefs) return null;
   const elegir: Tema['elegir'] = (clave, valor) => {
-    setPrefs({ ...prefs, [clave]: valor });
+    setPrefs((p) => p && { ...p, [clave]: valor }); // from the latest value: several calls in a row (a restore) must all stick
     setAjuste(db, clave === 'modo' ? 'tema_modo' : clave === 'acento' ? 'tema_acento' : clave === 'idioma' ? 'idioma' : 'mascota', String(valor)).catch(() => {});
   };
   return <Ctx.Provider value={{ ...prefs, colors, oscuro, lang, t, elegir }}>{children}</Ctx.Provider>;

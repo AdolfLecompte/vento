@@ -9,3 +9,4 @@ export const MASCOTAS = [
 ] as const;
 export type MascotaId = (typeof MASCOTAS)[number]['id'];
 export const MASCOTA_INICIAL: MascotaId = 'pan';
+export const esMascota = (x: string): x is MascotaId => MASCOTAS.some((m) => m.id === x);

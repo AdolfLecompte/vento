@@ -12,9 +12,9 @@ import {
 import { confirm, notify } from '@/feedback';
 import { ArrowCounterClockwiseIcon, FileCsvIcon, FloppyDiskIcon, FolderSimpleIcon, ShareNetworkIcon } from '@/icons';
 import type { T } from '@/idioma';
-import { aplicarTablas, cuando, Frecuencia, MESES, Tablas } from '@/respaldo';
+import { aplicarTablas, cuando, Frecuencia, MESES, Respaldo } from '@/respaldo';
 import { space } from '@/theme';
-import { useColors, useT } from '@/tema';
+import { useColors, useT, useTema } from '@/tema';
 import { animar, Appear, Body, Button, Card, Header, Label, Row, Screen, Segment, Small, Sub, Tap, Toggle } from '@/ui';
 
 // vento-2026-11-08.json -> "8 nov 2026"
@@ -80,7 +80,8 @@ export default function Respaldos() {
 
   const frecuencia = (f: Frecuencia) => hacer(async () => { await guardarConfig(db, { frecuencia: f }); })();
 
-  const restaurar = async (tablas: Tablas | null) => {
+  const { elegir } = useTema();
+  const restaurar = async (tablas: Respaldo | null) => {
     if (!tablas) return;
     const ok = await confirm(
       t('¿Restaurar esta copia?'), 'Restaurar',
@@ -88,6 +89,8 @@ export default function Respaldos() {
     );
     if (!ok) return;
     await aplicarTablas(db, tablas);
+    // the look comes back too (old copies have none, and then nothing changes)
+    (Object.keys(tablas.estilo) as (keyof typeof tablas.estilo)[]).forEach((k) => elegir(k, tablas.estilo[k] as never));
     reprogramar(db).catch(() => {}); // the reminder text depends on the data
     notify(t('Listo, restauré tu copia'));
   };

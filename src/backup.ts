@@ -2,11 +2,11 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { getAjuste, hoy, setAjuste } from '@/db';
+import { getAjuste, hoy, leerEstilo, setAjuste } from '@/db';
 import { traductor } from '@/traductor';
 import {
-  armarRespaldo, csvVentas, delMismoDia, esCopia, Frecuencia, horaCorta, leerTablas, masNuevaPrimero, nombreCopia, sobrantes, Tablas, toca,
-  validarRespaldo, Venta,
+  armarRespaldo, csvVentas, delMismoDia, esCopia, Frecuencia, horaCorta, leerTablas, masNuevaPrimero, nombreCopia, sobrantes, toca,
+  Respaldo, validarRespaldo, Venta,
 } from '@/respaldo';
 
 const CARPETA = 'vento';
@@ -58,7 +58,7 @@ export async function guardarCopia(db: SQLiteDatabase): Promise<string> {
   const nombre = nombreCopia(hoy(), horaCorta(new Date()));
   const f = dir.createFile(nombre, 'application/json');
   try {
-    await f.write(armarRespaldo(await leerTablas(db), hoy()));
+    await f.write(armarRespaldo(await leerTablas(db), hoy(), await leerEstilo(db)));
     validarRespaldo(await f.text()); // a copy that can't be restored is worse than none
   } catch (e) {
     try { f.delete(); } catch { /* nothing half-written left to clean */ }
@@ -88,10 +88,10 @@ export async function copiaAutomatica(db: SQLiteDatabase, antes?: () => void): P
   try { await guardarCopia(db); return 'hecha'; } catch { return 'error'; }
 }
 
-export const leerArchivo = async (f: File): Promise<Tablas> => validarRespaldo(await f.text());
+export const leerArchivo = async (f: File): Promise<Respaldo> => validarRespaldo(await f.text());
 
 // Pick any backup file from the phone (Drive, downloads...); null if cancelled.
-export async function elegirRespaldo(): Promise<Tablas | null> {
+export async function elegirRespaldo(): Promise<Respaldo | null> {
   const r = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
   if (r.canceled) return null;
   return leerArchivo(new File(r.assets[0].uri));
@@ -106,7 +106,7 @@ async function compartir(nombre: string, contenido: string, mime: string) {
 
 // Send a copy anywhere (Drive, WhatsApp, e-mail) through the share sheet.
 export async function enviarCopia(db: SQLiteDatabase) {
-  await compartir(nombreCopia(hoy()), armarRespaldo(await leerTablas(db), hoy()), 'application/json');
+  await compartir(nombreCopia(hoy()), armarRespaldo(await leerTablas(db), hoy(), await leerEstilo(db)), 'application/json');
 }
 
 export async function exportarCsv(db: SQLiteDatabase) {
