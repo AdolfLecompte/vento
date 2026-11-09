@@ -5,12 +5,11 @@ import { ScrollView, View } from 'react-native';
 import { gananciaPorProducto, hoy, listDeudores, listPedidos, PedidoRow } from '@/db';
 import { PedidoCard } from '@/PedidoCard';
 import { space } from '@/theme';
-import { alfa } from '@/paleta';
 import { Burbuja, Mascota } from '@/Mascota';
 import type { T } from '@/idioma';
 import { mensajesInicio, saludoHora } from '@/voz';
 import { useColors, useT, useTema } from '@/tema';
-import { animar, Appear, Bar, Body, Button, Chip, Label, money, Money, Row, Screen, Small, Sub, Tap, Wordmark } from '@/ui';
+import { animar, Appear, Bar, Body, Button, Card, Chip, Label, money, Money, Row, Screen, Small, Sub, Tap, Wordmark } from '@/ui';
 
 const saludo = (t: T) => saludoHora(new Date().getHours(), t);
 
@@ -84,11 +83,24 @@ export default function Inicio() {
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>
             <Label color={colors.onPrimarySuave}>{t('Ganancia')}</Label>
             <Money kind="hero" value={ganancia} color={colors.onPrimary} />
-            <View style={{ marginTop: space.md, gap: 6 }}>
-              <Bar value={vendido > 0 ? cobrado / vendido : 0} color={colors.onPrimary} track={alfa(colors.onPrimary, 0.28)} />
-              <Small color={colors.onPrimarySuave}>{t('Vendido {vendido} · cobrado {cobrado}', { vendido: money(vendido), cobrado: money(cobrado) })}</Small>
-            </View>
+            <Small color={colors.onPrimarySuave}>{rango.length === 1 ? t('En 1 pedido') : t('En {n} pedidos', { n: rango.length })}</Small>
           </View>
+        </Appear>
+
+        <Appear delay={120}>
+          <Card>
+            <Row>
+              <View style={{ flex: 1 }}><Label color={colors.muted}>{t('Cobrado')}</Label></View>
+              {vendido > 0 && <Label color={colors.primary}>{Math.round((cobrado / vendido) * 100)} %</Label>}
+            </Row>
+            <Money kind="title" value={cobrado} />
+            <Bar value={vendido > 0 ? cobrado / vendido : 0} />
+            <Small>
+              {vendido === 0 ? t('Todavía no hay ventas en este periodo')
+                : cobrado >= vendido ? t('Ya cobraste todo lo vendido ({vendido})', { vendido: money(vendido) })
+                : t('Te faltan {falta} para llegar a los {vendido} vendidos', { falta: money(vendido - cobrado), vendido: money(vendido) })}
+            </Small>
+          </Card>
         </Appear>
 
         {rows.length === 0 && (

@@ -10,14 +10,15 @@ import { Appear, Body, Button, Label, Title } from '@/ui';
 
 export type Kind = 'ok' | 'borrar' | 'aviso';
 type Toast = { text: string; kind: Kind; id: number };
-type Confirm = { title: string; message?: string; ok: string; done: (v: boolean) => void };
+type Confirm = { title: string; message?: string; ok: string; no: string; done: (v: boolean) => void };
 let setToast: (t: Toast | null) => void = () => {};
 let setAsk: (c: Confirm | null) => void = () => {};
 
 // The mascot is the one who says it. ok = done (accent colour), borrar = deleted and aviso = something to fix (both dark).
 export const notify = (text: string, kind: Kind = 'ok') => setToast({ text, kind, id: Date.now() });
-export const confirm = (title: string, ok = 'Borrar', message?: string) =>
-  new Promise<boolean>((done) => setAsk({ title, message, ok, done }));
+// `title` and `message` come already translated; `ok` and `no` are keys the dialog translates.
+export const confirm = (title: string, ok = 'Borrar', message?: string, no = 'Cancelar') =>
+  new Promise<boolean>((done) => setAsk({ title, message, ok, no, done }));
 
 const SHOW = 2400, OUT = 240;
 
@@ -74,7 +75,7 @@ export function Feedback() {
               {ask?.message ? <Body color={colors.muted}>{ask.message}</Body> : null}
               <View style={{ gap: space.sm, marginTop: space.sm }}>
                 <Button label={tr(ask?.ok ?? '')} onPress={() => close(true)} />
-                <Button label={tr('Cancelar')} kind="soft" onPress={() => close(false)} />
+                <Button label={tr(ask?.no ?? 'Cancelar')} kind="soft" onPress={() => close(false)} />
               </View>
             </Appear>
           </Pressable>

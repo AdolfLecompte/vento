@@ -3,7 +3,9 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { BackHandler, ScrollView, View } from 'react-native';
 import { bloqueado, ganancia, total as totalDe } from '@/calc';
-import { Borrador, Cliente, getPedido, guardarPedido, Linea, listClientes, listProductos, MEDIOS, Producto } from '@/db';
+import { FechaCampo } from '@/Calendario';
+import { Borrador, Cliente, getPedido, guardarPedido, hoy, Linea, listClientes, listProductos, MEDIOS, Producto } from '@/db';
+import { corta, esFechaISO } from '@/fecha';
 import { notify } from '@/feedback';
 import { CheckCircleIcon, MinusIcon, PlusIcon, TrashIcon } from '@/icons';
 import { space } from '@/theme';
@@ -69,6 +71,7 @@ export default function PedidoWizard() {
   const [medio, setMedio] = useState(MEDIOS[0]);
   const [parte, setParte] = useState(0);
   const [entregado, setEntregado] = useState(false);
+  const [fecha, setFecha] = useState(hoy); // the day of the order: today unless the user says otherwise
   const [guardando, setGuardando] = useState(false);
   const [pagadoPrevio, setPagadoPrevio] = useState(0); // what was already paid when editing
 
@@ -81,7 +84,7 @@ export default function PedidoWizard() {
       if (!p) return router.back();
       if (bloqueado(p.total, p.pagado, !!p.entregado)) { notify(t('Pedido cerrado: ya está pagado y entregado'), 'aviso'); return router.back(); }
       const cid = (await db.getFirstAsync<{ cliente_id: number }>('SELECT cliente_id FROM pedidos WHERE id=?', editId))?.cliente_id ?? null;
-      setClienteId(cid); setEntregado(!!p.entregado); setPagadoPrevio(p.pagado);
+      setClienteId(cid); setEntregado(!!p.entregado); setPagadoPrevio(p.pagado); setFecha(p.fecha);
       setLineas(await db.getAllAsync<Linea>(
         'SELECT producto_id, pr.nombre AS nombre, cantidad, costo_unit, precio_unit FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id WHERE pedido_id=? ORDER BY i.id', editId));
     })();
@@ -119,7 +122,8 @@ export default function PedidoWizard() {
   const guardar = async () => {
     if (guardando) return;
     if (editId && total < pagadoPrevio) return notify(t('Ya pagó más que este total. Quita un pago antes de bajarlo.'), 'aviso');
-    const b: Borrador = { clienteId, clienteNuevo: nuevo, lineas, entregado, pago: !editId && montoPago > 0 ? { monto: montoPago, medio } : null };
+    if (!esFechaISO(fecha) || fecha > hoy()) return notify(t('Elige un día que ya pasó o hoy'), 'aviso');
+    const b: Borrador = { clienteId, clienteNuevo: nuevo, fecha, lineas, entregado, pago: !editId && montoPago > 0 ? { monto: montoPago, medio } : null };
     setGuardando(true);
     try {
       const id = await guardarPedido(db, b, editId);
@@ -134,7 +138,7 @@ export default function PedidoWizard() {
   const existe = clientes.some((c) => c.nombre.toLowerCase() === texto.toLowerCase());
   const cats = [...new Set(prods.map((p) => p.categoria ?? ''))].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)));
 
-  const titulos = [t('¿Quién lo pidió?'), t('¿Qué pidió?'), editId ? t('Entrega') : t('Pago y entrega'), t('Revisa el pedido')];
+  const titulos = [t('¿Quién lo pidió?'), t('¿Qué pidió?'), editId ? t('Fecha y entrega') : t('Fecha, pago y entrega'), t('Revisa el pedido')];
   const ultimo = paso === PASOS;
 
   return (
@@ -237,6 +241,10 @@ export default function PedidoWizard() {
 
           {paso === 3 && (
             <>
+              <Card>
+                <Sub>{t('¿De qué día es el pedido?')}</Sub>
+                <FechaCampo valor={fecha} onChange={setFecha} />
+              </Card>
               {!editId && (
                 <Card>
                   <Sub>{t('¿Ya pagó?')}</Sub>
@@ -269,6 +277,9 @@ export default function PedidoWizard() {
                 <View style={{ height: 1, backgroundColor: colors.line }} />
                 <Row><View style={{ flex: 1 }}><Sub>{t('Total')}</Sub></View><Sub>{money(total)}</Sub></Row>
                 <Row><View style={{ flex: 1 }}><Label color={colors.muted}>{t('Tu ganancia')}</Label></View><Label color={colors.primary}>{money(gana)}</Label></Row>
+              </Bloque>
+              <Bloque titulo={t('Fecha')} onCambiar={() => irA(3)}>
+                <Sub>{corta(fecha, t)}</Sub>
               </Bloque>
               {!editId && (
                 <Bloque titulo={t('Pago')} onCambiar={() => irA(3)}>

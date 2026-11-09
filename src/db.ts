@@ -10,6 +10,7 @@ export type PedidoRow = {
   fecha: string;
   entregado: number;
   cliente: string;
+  productos: string; // names of the products in the order, for the search box
   total: number;
   costo: number;
   pagado: number;
@@ -53,6 +54,7 @@ export async function migrate(db: SQLiteDatabase) {
 
 const PEDIDO_SELECT = `
   SELECT p.id, p.fecha, p.entregado, c.nombre AS cliente,
+    COALESCE((SELECT GROUP_CONCAT(pr.nombre, ' · ') FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id WHERE i.pedido_id=p.id),'') AS productos,
     COALESCE((SELECT SUM(cantidad*precio_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS total,
     COALESCE((SELECT SUM(cantidad*costo_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS costo,
     COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado
@@ -93,6 +95,7 @@ export type Linea = { producto_id: number; nombre: string; cantidad: number; cos
 export type Borrador = {
   clienteId: number | null;
   clienteNuevo: string;
+  fecha: string; // YYYY-MM-DD, chosen by the user (an order can be written down days later)
   lineas: Linea[];
   entregado: boolean;
   pago: { monto: number; medio: string } | null; // only when creating
@@ -105,10 +108,10 @@ export async function guardarPedido(db: SQLiteDatabase, b: Borrador, editId?: nu
     let cliente = b.clienteId;
     if (cliente === null) cliente = (await db.runAsync('INSERT INTO clientes(nombre) VALUES(?)', b.clienteNuevo.trim())).lastInsertRowId;
     if (editId) {
-      await db.runAsync('UPDATE pedidos SET cliente_id=?, entregado=? WHERE id=?', cliente, b.entregado ? 1 : 0, editId);
+      await db.runAsync('UPDATE pedidos SET cliente_id=?, fecha=?, entregado=? WHERE id=?', cliente, b.fecha, b.entregado ? 1 : 0, editId);
       await db.runAsync('DELETE FROM pedido_items WHERE pedido_id=?', editId);
     } else {
-      id = (await db.runAsync('INSERT INTO pedidos(cliente_id, fecha, entregado) VALUES(?,?,?)', cliente, hoy(), b.entregado ? 1 : 0)).lastInsertRowId;
+      id = (await db.runAsync('INSERT INTO pedidos(cliente_id, fecha, entregado) VALUES(?,?,?)', cliente, b.fecha, b.entregado ? 1 : 0)).lastInsertRowId;
     }
     for (const l of b.lineas) {
       await db.runAsync(
@@ -117,7 +120,7 @@ export async function guardarPedido(db: SQLiteDatabase, b: Borrador, editId?: nu
       );
     }
     if (b.pago && b.pago.monto > 0) {
-      await db.runAsync('INSERT INTO pagos(pedido_id, monto, medio, fecha) VALUES(?,?,?,?)', id, b.pago.monto, b.pago.medio, hoy());
+      await db.runAsync('INSERT INTO pagos(pedido_id, monto, medio, fecha) VALUES(?,?,?,?)', id, b.pago.monto, b.pago.medio, b.fecha); // a payment taken with the order is dated like the order
     }
   });
   return id;

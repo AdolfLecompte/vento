@@ -34,6 +34,8 @@ export function validarRespaldo(texto: string): Tablas {
       if (!f || typeof f !== 'object') throw new Error(MAL);
       for (const c of cols) {
         const v = (f as Fila)[c];
+        // dates must look like 2026-11-08 (the app reads them back as such)
+        if (c === 'fecha' && !/^\d{4}-\d{2}-\d{2}$/.test(String(v))) throw new Error(MAL);
         const ok = TEXTO.has(c)
           ? typeof v === 'string' || (OPCIONAL.has(c) && (v === null || v === undefined))
           : Number.isSafeInteger(v);

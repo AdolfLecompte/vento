@@ -13,5 +13,8 @@ export function estadoDe(tot: number, pag: number): EstadoPago {
   return pag >= tot ? 'pagado' : 'parcial';
 }
 
-// A fully paid and delivered order is closed: its contents and payments can't be edited.
-export const bloqueado = (tot: number, pag: number, entregado: boolean) => entregado && tot > 0 && pag >= tot;
+// Delivered and paid in full: the order is finished and moves from the pending lists to the history.
+export const completo = (tot: number, pag: number, entregado: boolean) => entregado && pag >= tot;
+
+// A finished order with something in it is also closed: its contents and payments can't be edited (a 0-peso order can).
+export const bloqueado = (tot: number, pag: number, entregado: boolean) => completo(tot, pag, entregado) && tot > 0;

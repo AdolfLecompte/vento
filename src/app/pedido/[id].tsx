@@ -5,6 +5,7 @@ import { ScrollView, View } from 'react-native';
 import { bloqueado, estadoDe } from '@/calc';
 import { getPedido, hoy, ItemRow, listItems, listPagos, MEDIOS, PagoRow, PedidoRow } from '@/db';
 import { confirm, notify } from '@/feedback';
+import { corta } from '@/fecha';
 import { BankIcon, HandCoinsIcon, LockSimpleIcon, MoneyIcon, TrashIcon, TruckIcon } from '@/icons';
 import { space } from '@/theme';
 import { alfa, pagoColores } from '@/paleta';
@@ -69,7 +70,7 @@ export default function PedidoDetalle() {
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>
             <Label color={colors.onPrimarySuave}>{t('Total')}</Label>
             <Money kind="hero" value={ped.total} color={colors.onPrimary} />
-            <Small color={colors.onPrimarySuave}>{t('Ganancia {monto}', { monto: money(ped.total - ped.costo) })}</Small>
+            <Small color={colors.onPrimarySuave}>{t('Ganancia {monto}', { monto: money(ped.total - ped.costo) })} · {corta(ped.fecha, t)}</Small>
             <View style={{ marginTop: space.md, gap: 6 }}>
               <Bar value={ped.total > 0 ? ped.pagado / ped.total : 0} color={colors.onPrimary} track={alfa(colors.onPrimary, 0.28)} />
               <Small color={colors.onPrimarySuave}>{saldo > 0 ? t('Pagó {pagado} · falta {falta}', { pagado: money(ped.pagado), falta: money(saldo) }) : t('Pagó todo')}</Small>

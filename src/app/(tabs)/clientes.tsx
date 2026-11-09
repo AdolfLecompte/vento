@@ -5,10 +5,11 @@ import { FlatList, View } from 'react-native';
 import { CaretRightIcon } from '@/icons';
 import { space } from '@/theme';
 import { Vacio } from '@/Mascota';
+import { coincide } from '@/busqueda';
 import { useColors, useT } from '@/tema';
-import { animar, Appear, Avatar, Card, Chip, Fab, Header, money, Pill, Row, Screen, Small, Sub, Tap } from '@/ui';
+import { animar, Appear, Avatar, Buscador, Card, Chip, Fab, Header, money, Pill, Row, Screen, Small, Sub, Tap } from '@/ui';
 
-type Fila = { id: number; nombre: string; pedidos: number; debe: number };
+type Fila = { id: number; nombre: string; telefono: string | null; pedidos: number; debe: number };
 
 export default function Clientes() {
   const colors = useColors();
@@ -17,9 +18,10 @@ export default function Clientes() {
   const t = useT();
   const [rows, setRows] = useState<Fila[]>([]);
   const [soloDeben, setSoloDeben] = useState(false);
+  const [q, setQ] = useState('');
   const load = useCallback(() => {
     db.getAllAsync<Fila>(
-      `SELECT c.id, c.nombre, COUNT(t.id) AS pedidos, COALESCE(SUM(MAX(0, t.total - t.pagado)),0) AS debe FROM clientes c
+      `SELECT c.id, c.nombre, c.telefono, COUNT(t.id) AS pedidos, COALESCE(SUM(MAX(0, t.total - t.pagado)),0) AS debe FROM clientes c
        LEFT JOIN (SELECT p.id, p.cliente_id,
          COALESCE((SELECT SUM(cantidad*precio_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS total,
          COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado FROM pedidos p) t ON t.cliente_id=c.id
@@ -28,7 +30,7 @@ export default function Clientes() {
   useFocusEffect(load);
 
   const deben = rows.filter((c) => c.debe > 0);
-  const shown = soloDeben ? deben : rows;
+  const shown = (soloDeben ? deben : rows).filter((c) => coincide(q, c.nombre, c.telefono));
 
   return (
     <Screen>
@@ -37,13 +39,17 @@ export default function Clientes() {
         data={shown}
         keyExtractor={(c) => String(c.id)}
         contentContainerStyle={{ padding: space.lg, paddingTop: space.sm, gap: space.sm, paddingBottom: 120 }}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
-          <Row style={{ marginBottom: space.sm }}>
-            <Chip label={t('Todos')} on={!soloDeben} onPress={() => { animar(); setSoloDeben(false); }} />
-            <Chip label={t('Deben ({n})', { n: deben.length })} on={soloDeben} onPress={() => { animar(); setSoloDeben(true); }} />
-          </Row>
+          <View style={{ gap: space.md, marginBottom: space.sm }}>
+            <Buscador value={q} onChange={setQ} placeholder={t('Buscar por nombre o teléfono')} />
+            <Row>
+              <Chip label={t('Todos')} on={!soloDeben} onPress={() => { animar(); setSoloDeben(false); }} />
+              <Chip label={t('Deben ({n})', { n: deben.length })} on={soloDeben} onPress={() => { animar(); setSoloDeben(true); }} />
+            </Row>
+          </View>
         }
-        ListEmptyComponent={<Vacio texto={soloDeben ? t('Nadie te debe nada.') : t('Toca el + para agregar tu primer cliente.')} />}
+        ListEmptyComponent={<Vacio texto={q.trim() ? t('No encontré nada con «{q}».', { q: q.trim() }) : soloDeben ? t('Nadie te debe nada.') : t('Toca el + para agregar tu primer cliente.')} />}
         renderItem={({ item: c, index }) => (
           <Appear delay={Math.min(index, 8) * 40}>
             <Tap onPress={() => router.push(`/cliente/${c.id}`)} label={c.nombre}>

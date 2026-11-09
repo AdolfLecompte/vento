@@ -5,7 +5,7 @@ import Animated, {
   Easing, interpolateColor, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CaretLeftIcon, PlusIcon } from '@/icons';
+import { CaretLeftIcon, MagnifyingGlassIcon, PlusIcon, XIcon } from '@/icons';
 import { miles, money, num } from '@/formato';
 import { alfa } from '@/paleta';
 import { useColors, useT } from '@/tema';
@@ -86,9 +86,9 @@ export const animar = () =>
   LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
 // A money amount that counts up. It owns the per-frame state so only this text re-renders, not the whole screen.
-export function Money({ value, kind = 'sub', color }: { value: number; kind?: 'hero' | 'sub' | 'label'; color?: string }) {
+export function Money({ value, kind = 'sub', color }: { value: number; kind?: 'hero' | 'title' | 'sub' | 'label'; color?: string }) {
   const v = useCountUp(value);
-  const C = kind === 'hero' ? Hero : kind === 'sub' ? Sub : Label;
+  const C = kind === 'hero' ? Hero : kind === 'title' ? Title : kind === 'sub' ? Sub : Label;
   return <C color={color}>{money(v)}</C>;
 }
 
@@ -191,6 +191,25 @@ export function Field({ label, ...p }: TextInputProps & { label?: string }) {
     <View style={{ gap: 4, flex: 1 }}>
       {label ? <Small>{label}</Small> : null}
       <TextInput placeholderTextColor={colors.muted} {...p} style={[s.input, { backgroundColor: colors.bg, color: colors.ink }, p.style]} />
+    </View>
+  );
+}
+
+// The search box of the lists. It is loud on purpose (accent outline and a filled magnifier) so nobody mistakes it for decoration.
+export function Buscador({ value, onChange, placeholder }: { value: string; onChange: (s: string) => void; placeholder: string }) {
+  const colors = useColors();
+  const t = useT();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, height: 56, borderRadius: radius.pill, paddingLeft: 10, paddingRight: space.md, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.primary }}>
+      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+        <MagnifyingGlassIcon size={20} color={colors.onPrimary} weight="bold" />
+      </View>
+      <TextInput
+        value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={colors.muted} returnKeyType="search"
+        accessibilityLabel={t('Buscar')} autoCorrect={false}
+        style={{ flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.ink, paddingVertical: 0 }}
+      />
+      {value ? <Tap onPress={() => onChange('')} label={t('Borrar búsqueda')}><XIcon size={20} color={colors.muted} weight="bold" /></Tap> : null}
     </View>
   );
 }

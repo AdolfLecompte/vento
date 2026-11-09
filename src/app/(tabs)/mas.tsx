@@ -5,6 +5,7 @@ import { ReactNode, useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { hora12 } from '@/aviso-calc';
 import { cuando } from '@/respaldo';
+import { versionDisponible } from '@/actualizaciones';
 import { Config, leerConfig } from '@/backup';
 import { Aviso, leerAviso } from '@/avisos';
 import { BellIcon, CaretRightIcon, PaletteIcon, FloppyDiskIcon, InfoIcon, WalletIcon } from '@/icons';
@@ -46,7 +47,8 @@ export default function Mas() {
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [cfg, setCfg] = useState<Config | null>(null);
   const [ahora, setAhora] = useState(0); // read when loading, not while rendering
-  useFocusEffect(useCallback(() => { leerAviso(db).then(setAviso); leerConfig(db).then((c) => { setCfg(c); setAhora(Date.now()); }); }, [db]));
+  const [nueva, setNueva] = useState('');
+  useFocusEffect(useCallback(() => { leerAviso(db).then(setAviso); leerConfig(db).then((c) => { setCfg(c); setAhora(Date.now()); }); versionDisponible(db).then(setNueva); }, [db]));
   const copiaDetalle = cfg?.ultima
     ? (cfg.auto ? t('Última: {cuando} · automática', { cuando: cuando(cfg.ultima, ahora, t) }) : t('Última: {cuando}', { cuando: cuando(cfg.ultima, ahora, t) }))
     : cfg?.auto ? t('Automática · aún sin copias') : t('Aún sin copias · guarda tus datos');
@@ -89,7 +91,7 @@ export default function Mas() {
           <View style={{ height: 1, backgroundColor: colors.line, marginTop: space.sm }} />
           <Seccion>{t('Acerca de')}</Seccion>
           <Fila
-            icon={ic(InfoIcon)} titulo={t('Versión')} detalle={t('{version} · toca para ver las novedades', { version: Constants.expoConfig?.version ?? '1.0.0' })}
+            icon={ic(InfoIcon)} titulo={t('Versión')} detalle={nueva ? t('{version} · hay una versión nueva ({nueva})', { version: Constants.expoConfig?.version ?? '1.0.0', nueva }) : t('{version} · toca para ver las novedades', { version: Constants.expoConfig?.version ?? '1.0.0' })}
             onPress={() => router.push('/novedades')}
             right={<CaretRightIcon size={18} color={colors.muted} />}
           />

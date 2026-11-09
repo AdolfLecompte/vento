@@ -25,3 +25,8 @@ export { BellIcon } from 'phosphor-react-native/src/icons/Bell';
 export { FolderSimpleIcon } from 'phosphor-react-native/src/icons/FolderSimple';
 export { ShareNetworkIcon } from 'phosphor-react-native/src/icons/ShareNetwork';
 export { PaletteIcon } from 'phosphor-react-native/src/icons/Palette';
+export { MagnifyingGlassIcon } from 'phosphor-react-native/src/icons/MagnifyingGlass';
+export { XIcon } from 'phosphor-react-native/src/icons/X';
+export { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank';
+export { DownloadSimpleIcon } from 'phosphor-react-native/src/icons/DownloadSimple';
+export { ArrowsClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowsClockwise';

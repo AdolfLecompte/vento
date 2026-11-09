@@ -5,7 +5,8 @@ import { estadoDe } from '@/calc';
 import type { PedidoRow } from '@/db';
 import { pagoColores } from '@/paleta';
 import { useColors, useT } from '@/tema';
-import { Appear, Avatar, Card, money, Pill, Row, Small, Sub, Tap } from '@/ui';
+import { PackageIcon } from '@/icons';
+import { Appear, Card, money, Pill, Row, Small, Sub, Tap } from '@/ui';
 
 export const PedidoCard = memo(function PedidoCard({ r, index = 0 }: { r: PedidoRow; index?: number }) {
   const colors = useColors();
@@ -17,7 +18,9 @@ export const PedidoCard = memo(function PedidoCard({ r, index = 0 }: { r: Pedido
       <Tap onPress={() => router.push(`/pedido/${r.id}`)} label={t('Pedido de {nombre}', { nombre: r.cliente })}>
         <Card>
           <Row>
-            <Avatar name={r.cliente} />
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}>
+              <PackageIcon size={24} color={colors.primary} weight="duotone" />
+            </View>
             <View style={{ flex: 1 }}>
               <Sub lines={1}>{r.cliente}</Sub>
               <Small>{r.fecha}</Small>

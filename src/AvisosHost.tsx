@@ -2,9 +2,10 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { notificarAhora, reprogramar } from '@/avisos';
+import { abrirDescarga, buscarActualizacion } from '@/actualizaciones';
 import { copiaAutomatica } from '@/backup';
 import { getAjuste, hoy, setAjuste } from '@/db';
-import { notify } from '@/feedback';
+import { confirm, notify } from '@/feedback';
 import { useT } from '@/tema';
 
 // Keeps the app's background chores in step: on start, on return and when leaving it, it refreshes the scheduled
@@ -35,6 +36,15 @@ export function AvisosHost() {
     run('active');
     const sub = AppState.addEventListener('change', (s) => { if (s === 'active' || s === 'background') run(s); });
     return () => sub.remove();
+  }, [db, t]);
+
+  // Once a day, when the app opens, look for a newer release on GitHub and offer it (like Mihon). Silent if offline.
+  useEffect(() => {
+    buscarActualizacion(db).then(async (r) => {
+      if (r?.estado !== 'nueva' || !r.release) return;
+      const { release } = r;
+      if (await confirm(t('Hay una versión nueva: Vento {version}', { version: release.version }), 'Descargar', release.notas.trim() || undefined, 'Más tarde')) abrirDescarga(release);
+    }).catch(() => {});
   }, [db, t]);
   return null;
 }
