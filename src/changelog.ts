@@ -7,6 +7,28 @@ export type Entrada = { version: string; fecha: string } & Record<Lang, Textos>;
 
 export const CHANGELOG: Entrada[] = [
   {
+    version: '1.1.0',
+    fecha: '2026-11-08',
+    es: {
+      titulo: 'Historial aparte, icono nuevo y arreglos',
+      cambios: [
+        'El historial de pedidos terminados tiene su propia pantalla: se abre con el botón Historial de Pedidos, y Pedidos muestra solo lo que sigue abierto.',
+        'Los botones de filtro ocupan toda la línea en vez de quedarse pegados a la izquierda.',
+        'Nuevo icono de la app: el nombre VENTO, en lugar de la billetera.',
+        'El aviso de versiones nuevas ahora busca en el repositorio correcto de GitHub.',
+      ],
+    },
+    en: {
+      titulo: 'Separate history, new icon and fixes',
+      cambios: [
+        'The history of finished orders has its own screen: open it with the History button in Orders, and Orders now shows only what is still open.',
+        'The filter buttons fill the whole line instead of hugging the left edge.',
+        'New app icon: the VENTO name, instead of the wallet.',
+        'The new-version alert now looks in the right GitHub repository.',
+      ],
+    },
+  },
+  {
     version: '1.0.0',
     fecha: '2026-11-08',
     es: {

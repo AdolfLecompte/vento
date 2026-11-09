@@ -1,6 +1,6 @@
 {
   "name": "vento",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
@@ -46,7 +46,8 @@
     "lint": "expo lint",
     "apk": "./scripts/build-apk.sh",
     "preview": "node scripts/preview.mjs",
-    "llave": "./scripts/crear-llave.sh"
+    "llave": "./scripts/crear-llave.sh",
+    "icons": "./scripts/make-icons.sh"
   },
   "private": true
 }

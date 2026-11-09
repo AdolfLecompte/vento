@@ -44,8 +44,8 @@ export default function Clientes() {
           <View style={{ gap: space.md, marginBottom: space.sm }}>
             <Buscador value={q} onChange={setQ} placeholder={t('Buscar por nombre o teléfono')} />
             <Row>
-              <Chip label={t('Todos')} on={!soloDeben} onPress={() => { animar(); setSoloDeben(false); }} />
-              <Chip label={t('Deben ({n})', { n: deben.length })} on={soloDeben} onPress={() => { animar(); setSoloDeben(true); }} />
+              <Chip block label={t('Todos')} on={!soloDeben} onPress={() => { animar(); setSoloDeben(false); }} />
+              <Chip block label={t('Deben ({n})', { n: deben.length })} on={soloDeben} onPress={() => { animar(); setSoloDeben(true); }} />
             </Row>
           </View>
         }

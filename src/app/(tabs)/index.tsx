@@ -76,8 +76,8 @@ export default function Inicio() {
           </View>
         </Appear>
         <Row>
-          <Chip label={t('Este mes')} on={mes} onPress={() => { animar(); setMes(true); }} />
-          <Chip label={t('Todo')} on={!mes} onPress={() => { animar(); setMes(false); }} />
+          <Chip block label={t('Este mes')} on={mes} onPress={() => { animar(); setMes(true); }} />
+          <Chip block label={t('Todo')} on={!mes} onPress={() => { animar(); setMes(false); }} />
         </Row>
         <Appear delay={60}>
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>

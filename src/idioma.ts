@@ -360,7 +360,6 @@ export const EN: Record<string, string> = {
   '{version} · hay una versión nueva ({nueva})': '{version} · a new version is available ({nueva})',
   'Aquí aparecen los pedidos que ya entregaste y te pagaron.': 'Orders you have delivered and been paid for show up here.',
   'Buscar por cliente, producto o fecha': 'Search by client, product or date',
-  'Pendientes': 'Pending',
   'Buscar por nombre o categoría': 'Search by name or category',
   'No pude comprobarlo. Revisa tu conexión.': 'I couldn\'t check. Check your connection.',
   'Todavía no hay versiones publicadas.': 'There are no published versions yet.',
@@ -386,4 +385,5 @@ export const EN: Record<string, string> = {
   'D': 'S',
   'Descargar': 'Download',
   'Más tarde': 'Later',
+  'Entregados y pagados': 'Delivered and paid',
 };

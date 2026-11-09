@@ -145,16 +145,17 @@ export function RoundBtn({ children, onPress, label, soft }: { children: ReactNo
 }
 
 // Selected = primary fill, faded in.
-export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPress?: () => void }) {
+// `block` makes it share the whole row with its siblings (equal widths) instead of hugging the left edge.
+export function Chip({ label, on, onPress, block }: { label: string; on?: boolean; onPress?: () => void; block?: boolean }) {
   const colors = useColors();
   const p = useSharedValue(on ? 1 : 0);
   useEffect(() => { p.set(withTiming(on ? 1 : 0, { duration: 180 })); }, [on, p]);
   const bg = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(p.value, [0, 1], [colors.surface, colors.primary]) }));
   const fg = useAnimatedStyle(() => ({ color: interpolateColor(p.value, [0, 1], [colors.ink, colors.onPrimary]) }));
   return (
-    <Tap onPress={onPress} label={label}>
-      <Animated.View style={[s.chip, bg]}>
-        <Animated.Text style={[{ fontFamily: fonts.medium, fontSize: 14 }, fg]}>{label}</Animated.Text>
+    <Tap onPress={onPress} label={label} style={block ? { flex: 1 } : undefined}>
+      <Animated.View style={[s.chip, block && { justifyContent: 'center', paddingHorizontal: space.sm }, bg]}>
+        <Animated.Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[{ fontFamily: fonts.medium, fontSize: 14 }, fg]}>{label}</Animated.Text>
       </Animated.View>
     </Tap>
   );
@@ -268,13 +269,14 @@ export function Bar({ value, color, track }: { value: number; color?: string; tr
   );
 }
 
-export function Header({ title, onBack }: { title: string; onBack?: () => void }) {
+export function Header({ title, onBack, right }: { title: string; onBack?: () => void; right?: ReactNode }) {
   const colors = useColors();
   const t = useT();
   return (
     <View style={[s.row, { paddingHorizontal: space.lg, paddingVertical: space.sm, gap: space.sm }]}>
       {onBack && <RoundBtn soft label={t('Volver')} onPress={onBack}><CaretLeftIcon size={22} color={colors.primary} weight="bold" /></RoundBtn>}
       <View style={{ flex: 1 }}><Title lines={1}>{title}</Title></View>
+      {right}
     </View>
   );
 }

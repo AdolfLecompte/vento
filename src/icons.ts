@@ -30,3 +30,4 @@ export { XIcon } from 'phosphor-react-native/src/icons/X';
 export { CalendarBlankIcon } from 'phosphor-react-native/src/icons/CalendarBlank';
 export { DownloadSimpleIcon } from 'phosphor-react-native/src/icons/DownloadSimple';
 export { ArrowsClockwiseIcon } from 'phosphor-react-native/src/icons/ArrowsClockwise';
+export { ClockCounterClockwiseIcon } from 'phosphor-react-native/src/icons/ClockCounterClockwise';
