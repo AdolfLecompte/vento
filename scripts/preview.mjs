@@ -18,22 +18,28 @@ function aSvg(jsx) {
   }).join('');
 }
 
-export function generarHtml(mascotaTsx, mascotasTs) {
+// The drawing of each mascot as the inside of a 100x100 SVG (body and face), straight from Mascota.tsx.
+export function svgsMascotas(mascotaTsx, mascotasTs) {
   const rosa = mascotaTsx.match(/const ROSA = alfa\('(#[0-9A-Fa-f]{6})', ([\d.]+)\)/);
   const color = (v) => (v.trim() === 'ROSA' ? alfa(rosa[1], rosa[2]) : v.replace(/alfa\('(#[0-9A-Fa-f]{6})', ([\d.]+)\)/, (_, h, n) => alfa(h, n)));
   const nombres = Object.fromEntries([...mascotasTs.matchAll(/id: '(\w+)', nombre: '([^']+)'/g)].map((m) => [m[1], m[2]]));
   const cuerpos = [...mascotaTsx.matchAll(/^ {2}(\w+): \{\n {4}dibujo: \(\n([\s\S]*?)\n {4}\),\n {4}cara: \{ ([^\n]*) \},\n {2}\},/gm)];
   if (!cuerpos.length) throw new Error('No mascot drawings found in Mascota.tsx (did its layout change?)');
 
-  const tarjetas = cuerpos.map(([, id, dibujo, cara]) => {
+  return cuerpos.map(([, id, dibujo, cara]) => {
     const c = Object.fromEntries([...cara.matchAll(/(\w+): ('[^']*'|alfa\([^)]*\)|[\w.]+)/g)].map(([, k, v]) => [k, v.replace(/^'|'$/g, '')]));
     const x = +c.x, y = +c.y, sep = +c.sep, m = color(c.mejilla);
     const rostro =
       `<circle cx="${x - sep / 2 - 5}" cy="${y + 7}" r="3.6" fill="${m}"/><circle cx="${x + sep / 2 + 5}" cy="${y + 7}" r="3.6" fill="${m}"/>` +
       `<ellipse cx="${x - sep / 2}" cy="${y}" rx="3.4" ry="3.6" fill="${c.color}"/><ellipse cx="${x + sep / 2}" cy="${y}" rx="3.4" ry="3.6" fill="${c.color}"/>` +
       `<path d="M${x - 6} ${y + 7} Q${x} ${y + 13} ${x + 6} ${y + 7}" stroke="${c.color}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`;
-    return `    <figure><svg viewBox="0 0 100 100" role="img" aria-label="${nombres[id]}">${aSvg(dibujo)}${rostro}</svg><figcaption>${nombres[id]}</figcaption></figure>`;
+    return { id, nombre: nombres[id], dibujo: aSvg(dibujo) + rostro };
   });
+}
+
+export function generarHtml(mascotaTsx, mascotasTs) {
+  const tarjetas = svgsMascotas(mascotaTsx, mascotasTs).map(({ nombre, dibujo }) =>
+    `    <figure><svg viewBox="0 0 100 100" role="img" aria-label="${nombre}">${dibujo}</svg><figcaption>${nombre}</figcaption></figure>`);
 
   return `<!doctype html>
 <html lang="es">

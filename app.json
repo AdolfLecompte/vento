@@ -21,7 +21,10 @@
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "com.google.android.c2dm.permission.RECEIVE"
+        "com.google.android.c2dm.permission.RECEIVE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.ACCESS_NOTIFICATION_POLICY",
+        "android.permission.SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {
@@ -40,11 +43,13 @@
       "expo-sqlite",
       "expo-sharing",
       [
-        "expo-notifications",
+        "react-native-notify-kit",
         {
-          "color": "#16A34A",
-          "icon": "./assets/images/notification-icon.png",
-          "largeIcon": "./assets/images/notification-large.png"
+          "android": {
+            "icons": [
+              { "name": "notification_icon", "path": "./assets/images/notification-icon.png", "type": "small" }
+            ]
+          }
         }
       ]
     ],

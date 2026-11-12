@@ -19,7 +19,6 @@ magick -size 1024x1024 xc:"$VERDE" "$OUT/android-icon-background.png"
 # full icon (store, old launchers, and the big picture of notifications): green square with the mark a bit larger
 logo 720 "$TMP/m720.png"
 magick -size 1024x1024 xc:"$VERDE" \( "$TMP/m720.png" -background none -gravity center -extent 1024x1024 \) -composite "$OUT/icon.png"
-cp "$OUT/icon.png" "$OUT/notification-large.png"
 
 # splash: the mark alone (the plugin scales the picture to 200 dp)
 logo 800 "$TMP/m800.png"
@@ -32,4 +31,5 @@ magick -size 256x256 xc:none -fill "$VERDE" -draw 'roundrectangle 0,0 255,255 56
 # status-bar icon of notifications: must be a white silhouette, so the mark as is (transparent seals)
 logo 76 "$TMP/m76.png"
 magick "$TMP/m76.png" -background none -gravity center -extent 96x96 "$OUT/notification-icon.png"
+node scripts/mascot-icons.mjs
 echo "Icons ready in $OUT"

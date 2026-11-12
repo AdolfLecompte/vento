@@ -42,7 +42,6 @@ export const EN: Record<string, string> = {
   'Se guardó en la carpeta vento.': 'Saved in the vento folder.',
   'No se pudo hacer la copia automática. Vuelve a elegir la carpeta en Más.': 'Couldn\'t make the automatic backup. Pick the folder again in More.',
   'Recordatorio diario': 'Daily reminder',
-  '{nombre}: todo al día': '{nombre}: all caught up',
   'No hay nada pendiente por ahora.': 'Nothing pending right now.',
   'a. m.': 'AM',
   'p. m.': 'PM',
