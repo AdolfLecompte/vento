@@ -10,7 +10,6 @@ export type DatosVoz = {
   deudores: { nombre: string; debe: number }[];
   porEntregar: number;
   gananciaMes: number;
-  estrella: string | null; // the product that earns the most
 };
 
 // The messages Home shows one after another (tap the mascot for the next). The first one is the important news.
@@ -31,7 +30,6 @@ export function mensajesInicio(d: DatosVoz, dinero: (n: number) => string, t: T)
   }
   const out = [primera];
   if (d.gananciaMes > 0) out.push(t('Este mes llevas {monto} de ganancia.', { monto: dinero(d.gananciaMes) }));
-  if (d.estrella) out.push(t('Lo que más te deja es {producto}.', { producto: d.estrella }));
   return out;
 }
 

@@ -2,8 +2,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { gananciaPorProducto, hoy, listDeudores, listPedidos, PedidoRow } from '@/db';
-import { TrophyIcon } from '@/icons';
+import { hoy, listDeudores, listPedidos, PedidoRow, porPrepararPorProducto } from '@/db';
+import { inicioSemana, sumarDias } from '@/fecha';
 import { PedidoCard } from '@/PedidoCard';
 import { space } from '@/theme';
 import { Burbuja, Mascota } from '@/Mascota';
@@ -32,17 +32,20 @@ export default function Inicio() {
   const db = useSQLiteContext();
   const router = useRouter();
   const [rows, setRows] = useState<PedidoRow[]>([]);
-  const [prods, setProds] = useState<{ nombre: string; unidades: number; ganancia: number }[]>([]);
+  const [prep, setPrep] = useState<{ nombre: string; unidades: number; costo: number; venta: number }[]>([]);
+  const [semana, setSemana] = useState<'todo' | 'esta' | 'pasada'>('todo');
   const [mes, setMes] = useState(true);
   const [deudores, setDeudores] = useState<{ nombre: string; debe: number }[]>([]);
   const [idx, setIdx] = useState(0); // which of the mascot's messages is showing
   const desde = mes ? hoy().slice(0, 8) + '01' : '';
+  const lunes = inicioSemana(hoy());
+  const [prepDesde, prepHasta] = semana === 'esta' ? [lunes, sumarDias(lunes, 6)] : semana === 'pasada' ? [sumarDias(lunes, -7), sumarDias(lunes, -1)] : ['', '9999-12-31'];
 
   useFocusEffect(useCallback(() => {
     listPedidos(db).then(setRows);
-    gananciaPorProducto(db, desde).then(setProds);
     listDeudores(db).then(setDeudores);
-  }, [db, desde]));
+    porPrepararPorProducto(db, prepDesde, prepHasta).then(setPrep);
+  }, [db, prepDesde, prepHasta]));
 
   const rango = rows.filter((r) => r.fecha >= desde);
   const sum = (f: (r: PedidoRow) => number) => rango.reduce((a, r) => a + f(r), 0);
@@ -51,12 +54,12 @@ export default function Inicio() {
   const ganancia = vendido - sum((r) => r.costo);
   const porCobrar = rows.filter((r) => r.pagado < r.total).sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado));
   const porEntregar = rows.filter((r) => !r.entregado);
-  const max = Math.max(1, ...prods.map((p) => p.ganancia));
+  const invertir = prep.reduce((a, p) => a + p.costo, 0);
+  const cobrar = prep.reduce((a, p) => a + p.venta, 0);
   const mesDesde = hoy().slice(0, 8) + '01';
   const mensajes = mensajesInicio({
     pedidos: rows.length, deudores, porEntregar: porEntregar.length,
     gananciaMes: rows.filter((r) => r.fecha >= mesDesde).reduce((a, r) => a + r.total - r.costo, 0),
-    estrella: prods[0]?.nombre ?? null,
   }, money, t);
   const ir = (filtro: string) => router.navigate({ pathname: '/pedidos', params: { filtro } });
 
@@ -124,32 +127,36 @@ export default function Inicio() {
             {porEntregar.slice(0, 3).map((r, i) => <PedidoCard key={r.id} r={r} index={i} />)}
           </>
         )}
-        {prods.length > 0 && (
+        {porEntregar.length > 0 && (
           <>
-            <Seccion titulo={t('Lo que más te deja')} />
-            {/* podium: the best seller gets a filled card; the other two sit below it with their share of the best one */}
-            {prods.slice(0, 3).map((p, i) => {
-              const primero = i === 0;
-              return (
-                <Appear key={p.nombre} delay={i * 80}>
-                  <View style={{ backgroundColor: primero ? colors.primary : colors.surface, borderRadius: 24, padding: space.md, gap: space.sm }}>
-                    <Row>
-                      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: primero ? colors.onPrimary : colors.soft, alignItems: 'center', justifyContent: 'center' }}>
-                        {primero
-                          ? <TrophyIcon size={24} color={colors.primary} weight="fill" />
-                          : <Sub color={colors.primary}>{i + 1}</Sub>}
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Sub lines={1} color={primero ? colors.onPrimary : undefined}>{p.nombre}</Sub>
-                        <Small color={primero ? colors.onPrimary : colors.muted}>{t('{n} vendidos', { n: p.unidades })}</Small>
-                      </View>
-                      <Sub color={primero ? colors.onPrimary : colors.primary}>{money(p.ganancia)}</Sub>
-                    </Row>
-                    <Bar value={p.ganancia / max} color={primero ? colors.onPrimary : colors.primary} track={primero ? colors.primaryPressed : colors.bg} />
-                  </View>
-                </Appear>
-              );
-            })}
+            <Seccion titulo={t('Por preparar')} />
+            <Row style={{ gap: space.sm, flexWrap: 'nowrap' }}>
+              <Chip block label={t('Todo')} on={semana === 'todo'} onPress={() => { animar(); setSemana('todo'); }} />
+              <Chip block label={t('Esta semana')} on={semana === 'esta'} onPress={() => { animar(); setSemana('esta'); }} />
+              <Chip block label={t('Semana pasada')} on={semana === 'pasada'} onPress={() => { animar(); setSemana('pasada'); }} />
+            </Row>
+            {prep.length === 0 ? <Small>{t('Nada por preparar en este rango.')}</Small> : (
+              <>
+                <View style={{ backgroundColor: colors.primary, borderRadius: 24, padding: space.md, gap: space.xs }}>
+                  <Label color={colors.onPrimary}>{t('Invertir')}</Label>
+                  <Money value={invertir} kind="title" color={colors.onPrimary} />
+                  <Small color={colors.onPrimary}>{t('Vas a cobrar {monto}', { monto: money(cobrar) })}</Small>
+                </View>
+                {prep.map((p, i) => (
+                  <Appear key={p.nombre} delay={i * 60}>
+                    <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: space.md, gap: space.xs }}>
+                      <Row>
+                        <View style={{ flex: 1 }}><Sub lines={1}>{`${p.nombre} ×${p.unidades}`}</Sub></View>
+                        <Sub color={colors.primary}>{money(p.costo)}</Sub>
+                      </Row>
+                      <Small color={colors.muted}>
+                        {t('Costo {c} c/u · venta {v} c/u = {total}', { c: money(Math.round(p.costo / p.unidades)), v: money(Math.round(p.venta / p.unidades)), total: money(p.venta) })}
+                      </Small>
+                    </View>
+                  </Appear>
+                ))}
+              </>
+            )}
           </>
         )}
       </ScrollView>

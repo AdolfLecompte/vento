@@ -5,7 +5,7 @@ import { fraseAsistente, fraseCliente, fraseProducto, mensajesInicio, saludoHora
 
 const $ = (n: number) => `$${n}`;
 const es = crearT('es');
-const base: DatosVoz = { pedidos: 3, deudores: [], porEntregar: 0, gananciaMes: 0, estrella: null };
+const base: DatosVoz = { pedidos: 3, deudores: [], porEntregar: 0, gananciaMes: 0 };
 
 test('saludo segun la hora', () => {
   assert.equal(saludoHora(7, es), 'Buenos días');
@@ -26,8 +26,8 @@ test('una persona que debe se nombra; varias se cuentan; las entregas se suman a
 
 test('todo al dia y los mensajes extra solo salen si hay algo que decir', () => {
   assert.deepEqual(mensajesInicio(base, $, es), ['Todo al día, ¡buen trabajo!']);
-  const todo = mensajesInicio({ ...base, gananciaMes: 5000, estrella: 'Arepas' }, $, es);
-  assert.deepEqual(todo, ['Todo al día, ¡buen trabajo!', 'Este mes llevas $5000 de ganancia.', 'Lo que más te deja es Arepas.']);
+  const todo = mensajesInicio({ ...base, gananciaMes: 5000 }, $, es);
+  assert.deepEqual(todo, ['Todo al día, ¡buen trabajo!', 'Este mes llevas $5000 de ganancia.']);
   assert.equal(mensajesInicio({ ...base, deudores: [{ nombre: 'Ana', debe: 0 }] }, $, es)[0], 'Todo al día, ¡buen trabajo!'); // a zero debt isn't a debt
 });
 

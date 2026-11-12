@@ -86,13 +86,14 @@ export const listProductos = (db: SQLiteDatabase) =>
 export const listClientes = (db: SQLiteDatabase) =>
   db.getAllAsync<Cliente>('SELECT * FROM clientes ORDER BY nombre');
 
-// Per-product profit since `desde` (ISO date, '' = everything).
-export const gananciaPorProducto = (db: SQLiteDatabase, desde: string) =>
-  db.getAllAsync<{ nombre: string; unidades: number; ganancia: number }>(
-    `SELECT pr.nombre, SUM(i.cantidad) AS unidades, SUM(i.cantidad*(i.precio_unit-i.costo_unit)) AS ganancia
+// What the undelivered orders dated in [desde, hasta] still need, per product: units, what it costs (the money to put
+// in) and what it sells for. Biggest investment first.
+export const porPrepararPorProducto = (db: SQLiteDatabase, desde: string, hasta: string) =>
+  db.getAllAsync<{ nombre: string; unidades: number; costo: number; venta: number }>(
+    `SELECT pr.nombre, SUM(i.cantidad) AS unidades, SUM(i.cantidad*i.costo_unit) AS costo, SUM(i.cantidad*i.precio_unit) AS venta
      FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id JOIN pedidos p ON p.id=i.pedido_id
-     WHERE p.fecha >= ? GROUP BY pr.id ORDER BY ganancia DESC`,
-    desde,
+     WHERE p.entregado=0 AND p.fecha >= ? AND p.fecha <= ? GROUP BY pr.id ORDER BY costo DESC, pr.nombre`,
+    desde, hasta,
   );
 
 export type Linea = { producto_id: number; nombre: string; cantidad: number; costo_unit: number; precio_unit: number };
@@ -148,13 +149,14 @@ export const setAjuste = (db: SQLiteDatabase, clave: string, valor: string) =>
   db.runAsync('INSERT INTO ajustes(clave, valor) VALUES(?,?) ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor', clave, valor);
 
 // Clients with money pending, biggest debt first (used by the reminder). Counted per order: an order paid
-// too much never cancels what the same client still owes on another one.
+// too much never cancels what the same client still owes on another one. Only delivered orders count: nothing is
+// owed for something not handed over yet.
 export const listDeudores = (db: SQLiteDatabase) =>
   db.getAllAsync<{ nombre: string; debe: number }>(
     `SELECT c.nombre, SUM(MAX(0, t.total - t.pagado)) AS debe FROM clientes c
      JOIN (SELECT p.cliente_id,
        COALESCE((SELECT SUM(cantidad*precio_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS total,
-       COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado FROM pedidos p) t ON t.cliente_id=c.id
+       COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado FROM pedidos p WHERE p.entregado=1) t ON t.cliente_id=c.id
      GROUP BY c.id HAVING debe > 0 ORDER BY debe DESC`,
   );
 

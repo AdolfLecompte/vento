@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { corta, diasDelMes, esFechaISO, etiquetaDia, fechaISO, mesMas, primerDiaSemana, sumarDias } from './fecha.ts';
+import { corta, diasDelMes, esFechaISO, etiquetaDia, fechaISO, inicioSemana, mesMas, primerDiaSemana, sumarDias } from './fecha.ts';
 import { crearT } from './idioma.ts';
 
 const es = crearT('es'), en = crearT('en');
@@ -38,4 +38,11 @@ test('etiquetas: hoy, ayer y fecha corta, en los dos idiomas', () => {
   assert.equal(etiquetaDia('2026-11-02', '2026-11-08', es), '2 nov 2026');
   assert.equal(etiquetaDia('2026-11-07', '2026-11-08', en), 'Yesterday');
   assert.equal(corta('2026-08-15', en), '15 Aug 2026');
+});
+
+test('inicioSemana: lunes de esa semana (domingo cuenta con la semana que termina)', () => {
+  assert.equal(inicioSemana('2026-11-12'), '2026-11-09'); // Thursday
+  assert.equal(inicioSemana('2026-11-09'), '2026-11-09'); // Monday itself
+  assert.equal(inicioSemana('2026-11-15'), '2026-11-09'); // Sunday
+  assert.equal(inicioSemana('2026-01-01'), '2025-12-29'); // crosses the year
 });

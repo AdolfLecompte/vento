@@ -18,6 +18,9 @@ export function esFechaISO(s: string) {
 
 export const sumarDias = (iso: string, n: number) => { const [y, m, d] = partes(iso); return fechaISO(new Date(y, m - 1, d + n)); };
 
+// Monday of the week that contains `iso` (weeks start on Monday, like the calendar).
+export const inicioSemana = (iso: string) => { const [y, m, d] = partes(iso); return sumarDias(iso, -((new Date(y, m - 1, d).getDay() + 6) % 7)); };
+
 export const diasDelMes = (y: number, m: number) => new Date(y, m, 0).getDate(); // m is 1-12
 export const primerDiaSemana = (y: number, m: number) => (new Date(y, m - 1, 1).getDay() + 6) % 7; // Monday = 0
 export const mesMas = (y: number, m: number, n: number) => { const d = new Date(y, m - 1 + n, 1); return { y: d.getFullYear(), m: d.getMonth() + 1 }; };
