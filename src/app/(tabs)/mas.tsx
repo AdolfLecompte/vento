@@ -8,11 +8,12 @@ import { cuando } from '@/respaldo';
 import { versionDisponible } from '@/actualizaciones';
 import { Config, leerConfig } from '@/backup';
 import { Aviso, leerAviso } from '@/avisos';
-import { BellIcon, CaretRightIcon, PaletteIcon, FloppyDiskIcon, InfoIcon, WalletIcon } from '@/icons';
+import { BellIcon, CaretRightIcon, PaletteIcon, FloppyDiskIcon, InfoIcon } from '@/icons';
 import { space } from '@/theme';
 import { MASCOTAS } from '@/mascotas';
 import { ACENTOS } from '@/paleta';
 import { useColors, useT, useTema } from '@/tema';
+import { Logo } from '@/Logo';
 import { Appear, Label, Screen, Small, Sub, Tap, Wordmark } from '@/ui';
 
 // Mihon-style "More": centered logo, then flat rows (icon, title, subtitle) grouped under accent headings.
@@ -57,9 +58,7 @@ export default function Mas() {
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
         <Appear style={{ alignItems: 'center', gap: space.sm, paddingVertical: space.xl }}>
-          <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <WalletIcon size={44} color={colors.onPrimary} weight="fill" />
-          </View>
+          <Logo size={112} />
           <Wordmark size={30} />
           <Small>{t('Tu libreta de ventas')}</Small>
         </Appear>

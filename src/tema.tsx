@@ -2,12 +2,13 @@ import * as SystemUI from 'expo-system-ui';
 import { useSQLiteContext } from 'expo-sqlite';
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
-import { leerEstilo, setAjuste } from '@/db';
+import { getAjuste, leerEstilo, setAjuste } from '@/db';
+import { DIVISA_INICIAL, esDivisa } from '@/divisas';
 import { crearT, idiomaDelSistema, Lang, PreferenciaIdioma, resolverIdioma, T } from '@/idioma';
 import { MascotaId } from '@/mascotas';
 import { ACENTOS, AcentoId, Paleta, paleta, Preferencia } from '@/paleta';
 
-type Prefs = { modo: Preferencia; acento: AcentoId; mascota: MascotaId; idioma: PreferenciaIdioma };
+type Prefs = { modo: Preferencia; acento: AcentoId; mascota: MascotaId; idioma: PreferenciaIdioma; divisa: string };
 type Tema = Prefs & {
   colors: Paleta;
   oscuro: boolean;
@@ -25,7 +26,9 @@ export function TemaProvider({ children }: { children: ReactNode }) {
   const sistema = useColorScheme();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
 
-  useEffect(() => { leerEstilo(db).then(setPrefs); }, [db]);
+  useEffect(() => {
+    Promise.all([leerEstilo(db), getAjuste(db, 'divisa', DIVISA_INICIAL)]).then(([e, d]) => setPrefs({ ...e, divisa: esDivisa(d) ? d : DIVISA_INICIAL }));
+  }, [db]);
 
   const oscuro = prefs?.modo === 'oscuro' || (prefs?.modo === 'auto' && sistema === 'dark');
   const hexAcento = (ACENTOS.find((a) => a.id === prefs?.acento) ?? ACENTOS[0]).hex;
@@ -44,7 +47,7 @@ export function TemaProvider({ children }: { children: ReactNode }) {
   if (!prefs) return null;
   const elegir: Tema['elegir'] = (clave, valor) => {
     setPrefs((p) => p && { ...p, [clave]: valor }); // from the latest value: several calls in a row (a restore) must all stick
-    setAjuste(db, clave === 'modo' ? 'tema_modo' : clave === 'acento' ? 'tema_acento' : clave === 'idioma' ? 'idioma' : 'mascota', String(valor)).catch(() => {});
+    setAjuste(db, clave === 'modo' ? 'tema_modo' : clave === 'acento' ? 'tema_acento' : clave === 'idioma' ? 'idioma' : clave === 'divisa' ? 'divisa' : 'mascota', String(valor)).catch(() => {});
   };
   return <Ctx.Provider value={{ ...prefs, colors, oscuro, lang, t, elegir }}>{children}</Ctx.Provider>;
 }

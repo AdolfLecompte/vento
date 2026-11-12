@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<defs>
+<mask id="recorte" maskUnits="userSpaceOnUse" x="-200" y="-200" width="900" height="900"><rect x="-200" y="-200" width="900" height="900" fill="white"/><g fill="black" stroke="black" stroke-width="24" stroke-linejoin="round" stroke-linecap="round"><rect x="134" y="120" width="198" height="48" rx="18"/><path d="M141 160 H325 V270 A30 30 0 0 1 295 300 H171 A30 30 0 0 1 141 270 Z"/></g></mask>
+<mask id="simbolo" maskUnits="userSpaceOnUse" x="-200" y="-200" width="900" height="900"><rect x="-200" y="-200" width="900" height="900" fill="white"/><g transform="translate(189 192) scale(0.88)" fill="none" stroke="black" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"><path d="M68 30 C68 20 58 16 50 16 C40 16 30 22 30 32 C30 42 40 46 50 50 C60 54 70 58 70 68 C70 78 60 84 50 84 C40 84 30 80 30 70"/><path d="M50 6 V94"/></g></mask>
+</defs>
+<g transform="translate(15.3 64.7) scale(2.1)">
+<g mask="url(#recorte)" fill="white" stroke="white" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,66 342,66 342,26 430,105 342,184 342,146 40,146"/><polygon points="40,66 342,66 342,26 430,105 342,184 342,146 40,146" transform="rotate(180 236.5 213)"/></g>
+<g mask="url(#simbolo)" fill="white"><rect x="134" y="120" width="198" height="48" rx="18"/><path d="M141 160 H325 V270 A30 30 0 0 1 295 300 H171 A30 30 0 0 1 141 270 Z"/></g>
+</g>
+</svg>

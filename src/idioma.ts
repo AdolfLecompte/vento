@@ -124,6 +124,8 @@ export const EN: Record<string, string> = {
   'Por cobrar ({n})': 'To collect ({n})',
   'Todos': 'All',
   'Por preparar': 'To prepare',
+  'Divisa': 'Currency',
+  'Solo cambia el símbolo del logo: los montos no se convierten.': 'Only the logo symbol changes: amounts are not converted.',
   'Esta semana': 'This week',
   'Semana pasada': 'Last week',
   'Invertir': 'Invest',

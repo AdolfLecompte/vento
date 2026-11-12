@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { CheckIcon } from '@/icons';
 import { Mascota } from '@/Mascota';
+import { DIVISAS } from '@/divisas';
+import { Logo } from '@/Logo';
 import { MASCOTAS } from '@/mascotas';
 import { ACENTOS, Preferencia } from '@/paleta';
 import { space } from '@/theme';
@@ -13,7 +15,7 @@ import { Appear, Card, Header, Label, Option, Row, Screen, Segment, Small, Sub, 
 // Looks: light/dark mode, accent colour and mascot. Every change applies at once and is saved.
 export default function Apariencia() {
   const router = useRouter();
-  const { modo, acento, mascota, idioma, colors, t, elegir } = useTema();
+  const { modo, acento, mascota, idioma, divisa, colors, t, elegir } = useTema();
   const [saludo, setSaludo] = useState(0); // makes the big mascot hop when a new one is picked
 
   return (
@@ -35,6 +37,19 @@ export default function Apariencia() {
               options={[{ k: 'auto', label: t('Automático') }, { k: 'es', label: 'Español' }, { k: 'en', label: 'English' }]}
             />
             <Small>{t('Automático sigue el idioma del teléfono.')}</Small>
+          </Card>
+        </Appear>
+
+        <Appear delay={45}>
+          <Card>
+            <Sub>{t('Divisa')}</Sub>
+            <Row style={{ alignItems: 'center', gap: space.md, flexWrap: 'nowrap' }}>
+              <Logo size={72} />
+              <View style={{ flex: 1 }}>
+                <Segment<string> value={divisa} onChange={(k) => elegir('divisa', k)} options={DIVISAS.map((d) => ({ k: d.id, label: d.simbolo }))} />
+              </View>
+            </Row>
+            <Small>{t('Solo cambia el símbolo del logo: los montos no se convierten.')}</Small>
           </Card>
         </Appear>
 
