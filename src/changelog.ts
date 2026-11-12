@@ -7,6 +7,30 @@ export type Entrada = { version: string; fecha: string } & Record<Lang, Textos>;
 
 export const CHANGELOG: Entrada[] = [
   {
+    version: '1.2.0',
+    fecha: '2026-11-12',
+    es: {
+      titulo: 'Por preparar, logo nuevo y avisos con tu mascota',
+      cambios: [
+        'Inicio tiene «Por preparar»: lo que falta de los pedidos sin entregar, producto por producto, con cuánto invertir y cuánto vas a cobrar. Se filtra por todo, esta semana o la semana pasada.',
+        'Solo se cuenta como deuda lo que ya entregaste: los avisos y la mascota dejan de reclamar pedidos que aún no has entregado.',
+        'Nuevo logo de la app: dos flechas en sentidos opuestos con una caja en medio.',
+        'En Apariencia puedes elegir la divisa ($, €, £, ¥ o ₹). Solo cambia el símbolo del logo; los montos no se convierten.',
+        'El aviso diario llega con la cara de tu mascota.',
+      ],
+    },
+    en: {
+      titulo: 'To prepare, a new logo and alerts from your mascot',
+      cambios: [
+        'Home has "To prepare": what the undelivered orders still need, product by product, with how much to invest and how much you will collect. Filter by all, this week or last week.',
+        'Only what you already delivered counts as debt: alerts and the mascot stop nagging about orders you have not handed over yet.',
+        'New app logo: two arrows going opposite ways with a box in the middle.',
+        'In Appearance you can pick the currency ($, €, £, ¥ or ₹). It only changes the logo symbol; amounts are not converted.',
+        'The daily alert arrives with your mascot\'s face.',
+      ],
+    },
+  },
+  {
     version: '1.1.0',
     fecha: '2026-11-08',
     es: {
