@@ -8,6 +8,7 @@ import { useTema } from '@/tema';
 // The system splash can't change colour while the app runs (Android paints it before any code), so it only covers the
 // start-up. This one is drawn right after, in the colour the user picked: the logo settles in, holds a moment, fades out.
 SplashScreen.preventAutoHideAsync().catch(() => {});
+setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 5000); // if the settings never load, the system splash must not stay forever
 
 export function Splash() {
   const { colors } = useTema();

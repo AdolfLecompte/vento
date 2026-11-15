@@ -14,8 +14,8 @@ if [ "$VENTO_DEBUG_SIGN" != 1 ]; then
       stty -echo 2>/dev/null; trap 'stty echo 2>/dev/null' EXIT
       IFS= read -r VENTO_KS_PASSWORD; stty echo 2>/dev/null; printf '\n' >&2
     fi
-    export VENTO_KS_PASSWORD
-    if keytool -list -keystore "$KEYSTORE" -alias "${VENTO_KEY_ALIAS:-vento}" -storepass:env VENTO_KS_PASSWORD >/dev/null 2>&1; then break; fi
+    # Not exported: gradle and every script of a dependency would inherit it for the whole build. Only the two commands that need it get it.
+    if VENTO_KS_PASSWORD="$VENTO_KS_PASSWORD" keytool -list -keystore "$KEYSTORE" -alias "${VENTO_KEY_ALIAS:-vento}" -storepass:env VENTO_KS_PASSWORD >/dev/null 2>&1; then break; fi
     echo "Wrong password ($intento/3)." >&2
     unset VENTO_KS_PASSWORD
     [ "$intento" = 3 ] && { echo "Giving up: nothing was built." >&2; exit 1; }
@@ -32,5 +32,5 @@ sed -i 's/networkTimeout=10000/networkTimeout=120000/' android/gradle/wrapper/gr
 mkdir -p dist
 SALIDA="dist/vento-$VERSION.apk"
 if [ "$VENTO_DEBUG_SIGN" = 1 ]; then cp android/app/build/outputs/apk/release/app-release.apk "$SALIDA"
-else ./scripts/sign-apk.sh android/app/build/outputs/apk/release/app-release.apk "$SALIDA"; fi
+else VENTO_KS_PASSWORD="$VENTO_KS_PASSWORD" ./scripts/sign-apk.sh android/app/build/outputs/apk/release/app-release.apk "$SALIDA"; fi
 echo "Ready: $SALIDA"
