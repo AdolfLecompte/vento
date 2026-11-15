@@ -7,6 +7,32 @@ export type Entrada = { version: string; fecha: string } & Record<Lang, Textos>;
 
 export const CHANGELOG: Entrada[] = [
   {
+    version: '1.3.0',
+    fecha: '2026-11-14',
+    es: {
+      titulo: 'Cuentas claras, actualización dentro de la app y mascotas con nombre',
+      cambios: [
+        'Las cuentas cuadran en todas las pantallas: la deuda es solo lo entregado y sin pagar, y la ganancia de Inicio es la de lo entregado, con lo que falta por entregar debajo.',
+        'Inicio y el Historial se pueden ver por semana, por mes o todo, con flechas para ir a los períodos anteriores.',
+        '«Por preparar» cuenta todo el período, también lo ya entregado, y marca cuántas unidades siguen sin entregar.',
+        'Botón «Repetir pedido»: abre un pedido nuevo con el mismo cliente y productos.',
+        'Más → Versión descarga la actualización dentro de la app, con barra de progreso, y la entrega al instalador de Android.',
+        'Logo nuevo, portada con el color que elegiste, 12 colores y mascotas con nombre y más movimiento.',
+      ],
+    },
+    en: {
+      titulo: 'Clear numbers, in-app updates and named mascots',
+      cambios: [
+        'The numbers agree on every screen: debt is only what was delivered and unpaid, and the profit on Home is what was delivered, with what is still to deliver below it.',
+        'Home and History can be viewed by week, by month or all, with arrows to step back to earlier periods.',
+        '"To prepare" counts the whole period, delivered orders too, and shows how many units are still undelivered.',
+        'A "Repeat order" button opens a new order with the same client and products.',
+        'More → Version downloads the update inside the app, with a progress bar, and hands it to Android\'s installer.',
+        'New logo, a splash in the colour you picked, 12 colours and mascots with names and more movement.',
+      ],
+    },
+  },
+  {
     version: '1.2.0',
     fecha: '2026-11-12',
     es: {
