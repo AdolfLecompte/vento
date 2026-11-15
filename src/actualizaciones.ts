@@ -54,7 +54,8 @@ export async function descargarEInstalar(r: Release, onProgreso: (fraccion: numb
   if (!r.apk) throw new Error('This release has no APK');
   cancelada = false;
   const destino = `${FileSystem.cacheDirectory}vento-${r.version}.apk`;
-  await FileSystem.deleteAsync(destino, { idempotent: true });
+  // Old downloads (about 50 MB each) are no longer needed once a newer one is coming.
+  for (const n of await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory!)) if (/^vento-.*\.apk$/.test(n)) await FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${n}`, { idempotent: true });
   descarga = FileSystem.createDownloadResumable(r.apk, destino, {}, (p) =>
     onProgreso(p.totalBytesExpectedToWrite > 0 ? p.totalBytesWritten / p.totalBytesExpectedToWrite : 0));
   let res;

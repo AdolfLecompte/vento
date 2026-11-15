@@ -77,3 +77,11 @@ test('copias con hora: nombre, orden mezclado con el formato viejo y limpieza de
   // the new one stays, older same-day ones go, other days are untouched
   assert.deepEqual(delMismoDia([...dia, 'notas.json'], '2026-11-08', 'vento-2026-11-08-173005.json').sort(), ['vento-2026-11-08-090000.json', 'vento-2026-11-08.json']);
 });
+
+test('csv: un texto que empieza con = + - @ no se ejecuta como formula', () => {
+  const csv = csvVentas([{ pedido: 1, fecha: '2026-11-08', cliente: '=HYPERLINK("x")', producto: '-Jugo', cantidad: 1, costo_unit: 500, precio_unit: 900, entregado: 0 }], es);
+  const fila = csv.split('\r\n')[1];
+  assert.ok(fila.includes(`"'=HYPERLINK(""x"")"`)); // quoted, with ' in front
+  assert.ok(fila.includes(";'-Jugo;"));
+  assert.ok(fila.includes(';400;')); // numbers (even a negative profit) are not touched
+});

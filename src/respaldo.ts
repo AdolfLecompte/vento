@@ -70,8 +70,9 @@ export type Venta = {
   cantidad: number; costo_unit: number; precio_unit: number; entregado: number;
 };
 
+// A text starting with = + - @ would run as a formula when the CSV is opened in a spreadsheet: a ' in front keeps it text.
 const esc = (v: Cell) => {
-  const s = String(v ?? '');
+  const s = typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? `'${v}` : String(v ?? '');
   return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
