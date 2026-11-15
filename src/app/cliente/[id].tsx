@@ -2,6 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { deuda } from '@/calc';
 import { borrarCliente, Cliente, pedidosDeCliente, PedidoRow } from '@/db';
 import { confirm, notify } from '@/feedback';
 import { TrashIcon } from '@/icons';
@@ -59,7 +60,7 @@ export default function ClienteScreen() {
 
   if (!c) return null;
   const comprado = pedidos.reduce((a, p) => a + p.total, 0);
-  const debe = pedidos.reduce((a, p) => a + (p.entregado ? Math.max(0, p.total - p.pagado) : 0), 0) // owed = delivered and unpaid, like everywhere else;
+  const debe = pedidos.reduce((a, p) => a + deuda(p), 0);
   const cambio = nombre.trim() !== c.nombre || (tel.trim() || null) !== (c.telefono || null);
 
   const guardar = async () => {

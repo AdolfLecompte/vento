@@ -179,3 +179,20 @@ export async function leerEstilo(db: SQLiteDatabase): Promise<Required<Estilo>> 
   ]);
   return { modo: esPreferencia(m) ? m : 'claro', acento: esAcento(a) ? a : 'verde', mascota: esMascota(ma) ? ma : MASCOTA_INICIAL, idioma: esPreferenciaIdioma(i) ? i : 'auto' };
 }
+
+// The Clients tab: every client with how many orders they have and what they owe (delivered orders only, per order).
+export const listClientesConDeuda = (db: SQLiteDatabase) =>
+  db.getAllAsync<{ id: number; nombre: string; telefono: string | null; pedidos: number; debe: number }>(
+    `SELECT c.id, c.nombre, c.telefono, COUNT(t.id) AS pedidos, COALESCE(SUM(CASE WHEN t.entregado=1 THEN MAX(0, t.total - t.pagado) ELSE 0 END),0) AS debe FROM clientes c
+     LEFT JOIN (SELECT p.id, p.cliente_id, p.entregado,
+       COALESCE((SELECT SUM(cantidad*precio_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS total,
+       COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado FROM pedidos p) t ON t.cliente_id=c.id
+     GROUP BY c.id ORDER BY c.nombre`,
+  );
+
+// The lines of a new order that repeats an old one: the price agreed back then, but today's cost (that batch isn't bought yet).
+export const lineasParaRepetir = (db: SQLiteDatabase, pedido: number) =>
+  db.getAllAsync<Linea>(
+    'SELECT i.producto_id, pr.nombre AS nombre, i.cantidad, pr.costo AS costo_unit, i.precio_unit FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id WHERE i.pedido_id=? ORDER BY i.id',
+    pedido,
+  );

@@ -4,7 +4,7 @@ import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { BackHandler, ScrollView, View } from 'react-native';
 import { bloqueado, ganancia, total as totalDe } from '@/calc';
 import { FechaCampo } from '@/Calendario';
-import { Borrador, Cliente, getPedido, guardarPedido, hoy, Linea, listClientes, listProductos, MEDIOS, Producto } from '@/db';
+import { Borrador, Cliente, getPedido, guardarPedido, hoy, Linea, lineasParaRepetir, listClientes, listProductos, MEDIOS, Producto } from '@/db';
 import { coincide } from '@/busqueda';
 import { corta, esFechaISO } from '@/fecha';
 import { notify } from '@/feedback';
@@ -89,8 +89,7 @@ export default function PedidoWizard() {
         if (!p) return;
         const cid = (await db.getFirstAsync<{ cliente_id: number }>('SELECT cliente_id FROM pedidos WHERE id=?', repetirId))?.cliente_id ?? null;
         setClienteId(cid);
-        setLineas(await db.getAllAsync<Linea>(
-          'SELECT i.producto_id, pr.nombre AS nombre, i.cantidad, pr.costo AS costo_unit, i.precio_unit FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id WHERE i.pedido_id=? ORDER BY i.id', repetirId));
+        setLineas(await lineasParaRepetir(db, repetirId));
         notify(t('Copié el pedido de {nombre}. Cambia lo que quieras.', { nombre: p.cliente }));
       })();
       return;

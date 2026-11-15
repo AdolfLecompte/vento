@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { base } from './db-memoria.ts';
-import { borrarCliente, getPedido, guardarPedido, listDeudores, listPorEntregar, migrate, porPrepararPorProducto, type Linea } from './db.ts';
+import { borrarCliente, getPedido, guardarPedido, lineasParaRepetir, listClientesConDeuda, listDeudores, listPorEntregar, migrate, porPrepararPorProducto, type Linea } from './db.ts';
 
 async function nueva() {
   const { sq, db } = base();
@@ -93,4 +93,46 @@ test('por preparar: todo el rango (entregado o no), pendientes aparte, costo de 
     { nombre: 'Jugo', unidades: 4, pendientes: 4, costo: 2000, venta: 3600 },
   ]); // the old order (October) stays out
   assert.equal((await porPrepararPorProducto(db, '', '9999-12-31')).find((p) => p.nombre === 'Jugo')?.unidades, 5);
+});
+
+test('deuda: la pestana Clientes, el recordatorio y la suma por pedido dan lo mismo', async () => {
+  const { sq, db } = await nueva();
+  sq.exec(`
+    INSERT INTO clientes(id,nombre) VALUES (3,'Cris');
+    INSERT INTO pedidos VALUES (1,1,'2026-11-01',1),(2,1,'2026-11-02',0),(3,2,'2026-11-03',1),(4,2,'2026-11-04',1),(5,3,'2026-11-05',0);
+    INSERT INTO pedido_items VALUES (1,1,1,2,1000,1500),(2,2,1,1,1000,1500),(3,3,2,2,500,900),(4,4,2,1,500,900),(5,5,1,1,1000,1500);
+    INSERT INTO pagos VALUES (1,1,1000,'Efectivo','2026-11-01'),(2,3,2000,'Efectivo','2026-11-03'),(3,2,1500,'Efectivo','2026-11-02');
+  `);
+  const clientes = await listClientesConDeuda(db);
+  const deben = Object.fromEntries(clientes.map((c) => [c.nombre, c.debe]));
+  // Ana: order 1 delivered owes 3000-1000; order 2 not delivered (fully prepaid) owes nothing. Beto: order 3 overpaid owes 0, order 4 owes 900. Cris: only an undelivered order.
+  assert.deepEqual(deben, { Ana: 2000, Beto: 900, Cris: 0 });
+  assert.equal(clientes.find((c) => c.nombre === 'Ana')?.pedidos, 2);
+  const recordatorio = Object.fromEntries((await listDeudores(db)).map((d) => [d.nombre, d.debe]));
+  assert.deepEqual(recordatorio, { Ana: 2000, Beto: 900 }); // same numbers, and nobody with 0
+});
+
+test('repetir pedido: mismo precio pactado, costo de hoy, en el mismo orden', async () => {
+  const { sq, db } = await nueva();
+  sq.exec(`
+    INSERT INTO pedidos VALUES (1,1,'2026-11-01',1);
+    INSERT INTO pedido_items VALUES (1,1,1,2,900,1400),(2,1,2,3,400,800);
+    UPDATE productos SET costo=1200 WHERE id=1;
+  `);
+  assert.deepEqual(await lineasParaRepetir(db, 1), [
+    { producto_id: 1, nombre: 'Arepas', cantidad: 2, costo_unit: 1200, precio_unit: 1400 }, // today's cost, the old price
+    { producto_id: 2, nombre: 'Jugo', cantidad: 3, costo_unit: 500, precio_unit: 800 },
+  ]);
+  assert.deepEqual(await lineasParaRepetir(db, 99), []);
+});
+
+test('por preparar: un pedido pagado pero sin entregar cuenta como pendiente', async () => {
+  const { sq, db } = await nueva();
+  sq.exec(`
+    INSERT INTO pedidos VALUES (1,1,'2026-11-10',0);
+    INSERT INTO pedido_items VALUES (1,1,2,4,500,900);
+    INSERT INTO pagos VALUES (1,1,3600,'Efectivo','2026-11-10');
+  `);
+  const [fila] = await porPrepararPorProducto(db, '2026-11-09', '2026-11-15');
+  assert.deepEqual(fila, { nombre: 'Jugo', unidades: 4, pendientes: 4, costo: 2000, venta: 3600 });
 });

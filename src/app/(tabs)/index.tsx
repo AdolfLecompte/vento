@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { resumen } from '@/calc';
 import { hoy, listDeudores, listPedidos, PedidoRow, porPrepararPorProducto } from '@/db';
 import { type Periodo, rangoPeriodo } from '@/fecha';
 import { SelectorPeriodo } from '@/SelectorPeriodo';
@@ -48,13 +49,7 @@ export default function Inicio() {
   }, [db, desde, hasta]));
 
   const rango = rows.filter((r) => r.fecha >= desde && r.fecha <= hasta);
-  const sum = (f: (r: PedidoRow) => number) => rango.reduce((a, r) => a + f(r), 0);
-  const vendido = sum((r) => r.total);
-  const vendidoEnt = rango.filter((r) => r.entregado).reduce((a, r) => a + r.total, 0); // the card below is about what was handed over
-  const cobradoEnt = rango.filter((r) => r.entregado).reduce((a, r) => a + Math.min(r.pagado, r.total), 0);
-  const entregados = rango.filter((r) => r.entregado);
-  const ganancia = entregados.reduce((a, r) => a + r.total - r.costo, 0); // earned: only what was handed over
-  const gananciaPendiente = vendido - sum((r) => r.costo) - ganancia; // expected from orders not delivered yet
+  const { entregados, ganancia, gananciaPendiente, vendidoEnt, cobradoEnt } = resumen(rango);
   const porCobrar = rows.filter((r) => r.entregado && r.pagado < r.total).sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado));
   const porEntregar = rows.filter((r) => !r.entregado);
   const invertir = prep.reduce((a, p) => a + p.costo, 0);
@@ -87,7 +82,7 @@ export default function Inicio() {
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>
             <Label color={colors.onPrimarySuave}>{t('Ganancia')}</Label>
             <Money kind="hero" value={ganancia} color={colors.onPrimary} />
-            <Small color={colors.onPrimarySuave}>{entregados.length === 1 ? t('De 1 pedido entregado') : t('De {n} pedidos entregados', { n: entregados.length })}</Small>
+            <Small color={colors.onPrimarySuave}>{entregados === 1 ? t('De 1 pedido entregado') : t('De {n} pedidos entregados', { n: entregados })}</Small>
             {gananciaPendiente !== 0 && <Small color={colors.onPrimarySuave}>{t('+{monto} por entregar', { monto: money(gananciaPendiente) })}</Small>}
           </View>
         </Appear>

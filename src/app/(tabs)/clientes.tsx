@@ -2,6 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { FlatList, View } from 'react-native';
+import { listClientesConDeuda } from '@/db';
 import { CaretRightIcon } from '@/icons';
 import { space } from '@/theme';
 import { Vacio } from '@/Mascota';
@@ -20,12 +21,7 @@ export default function Clientes() {
   const [soloDeben, setSoloDeben] = useState(false);
   const [q, setQ] = useState('');
   const load = useCallback(() => {
-    db.getAllAsync<Fila>(
-      `SELECT c.id, c.nombre, c.telefono, COUNT(t.id) AS pedidos, COALESCE(SUM(CASE WHEN t.entregado=1 THEN MAX(0, t.total - t.pagado) ELSE 0 END),0) AS debe FROM clientes c
-       LEFT JOIN (SELECT p.id, p.cliente_id, p.entregado,
-         COALESCE((SELECT SUM(cantidad*precio_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS total,
-         COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado FROM pedidos p) t ON t.cliente_id=c.id
-       GROUP BY c.id ORDER BY c.nombre`).then(setRows);
+    listClientesConDeuda(db).then(setRows);
   }, [db]);
   useFocusEffect(load);
 
