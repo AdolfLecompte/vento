@@ -6,7 +6,7 @@ import { bloqueado, estadoDe } from '@/calc';
 import { getPedido, hoy, ItemRow, listItems, listPagos, MEDIOS, PagoRow, PedidoRow } from '@/db';
 import { confirm, notify } from '@/feedback';
 import { corta } from '@/fecha';
-import { BankIcon, HandCoinsIcon, LockSimpleIcon, MoneyIcon, TrashIcon, TruckIcon } from '@/icons';
+import { ArrowsClockwiseIcon, BankIcon, HandCoinsIcon, LockSimpleIcon, MoneyIcon, TrashIcon, TruckIcon } from '@/icons';
 import { space } from '@/theme';
 import { alfa, pagoColores } from '@/paleta';
 import { useColors, useT } from '@/tema';
@@ -137,6 +137,7 @@ export default function PedidoDetalle() {
         ) : (
           <Button label={t('Editar pedido')} onPress={() => router.push({ pathname: '/pedido/nuevo', params: { editar: String(id) } })} />
         )}
+        <Button kind="soft" label={t('Repetir pedido')} icon={<ArrowsClockwiseIcon size={22} color={colors.primary} weight="bold" />} onPress={() => router.push({ pathname: '/pedido/nuevo', params: { repetir: String(id) } })} />
         <Button kind="ghost" label={t('Borrar pedido')} onPress={borrar} />
       </ScrollView>
     </Screen>

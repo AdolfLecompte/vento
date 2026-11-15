@@ -131,6 +131,8 @@ export const EN: Record<string, string> = {
   'Mes pasado': 'Last month',
   'Semana': 'Week',
   'Mes': 'Month',
+  'Repetir pedido': 'Repeat order',
+  'Copié el pedido de {nombre}. Cambia lo que quieras.': 'I copied {nombre}\'s order. Change anything you like.',
   'Anterior': 'Previous',
   'Siguiente': 'Next',
   'Semana pasada': 'Last week',

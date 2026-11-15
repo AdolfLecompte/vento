@@ -53,12 +53,13 @@ function Bloque({ titulo, onCambiar, children }: { titulo: string; onCambiar: ()
 
 export default function PedidoWizard() {
   const colors = useColors();
-  const { editar } = useLocalSearchParams<{ editar?: string }>();
+  const { editar, repetir } = useLocalSearchParams<{ editar?: string; repetir?: string }>();
   const editId = editar ? Number(editar) : undefined;
+  const repetirId = repetir && !editar ? Number(repetir) : undefined; // a new order that starts as a copy of this one
   const db = useSQLiteContext();
   const router = useRouter();
   const t = useT();
-  const [paso, setPaso] = useState(editId ? 2 : 1);
+  const [paso, setPaso] = useState(editId || repetirId ? 2 : 1);
   const [dir, setDir] = useState(1); // 1 = moving forward, -1 = going back: the new step slides in from that side
   const irA = useCallback((n: number) => { setDir(n >= paso ? 1 : -1); setPaso(n); }, [paso]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -80,7 +81,20 @@ export default function PedidoWizard() {
   useEffect(() => {
     listClientes(db).then(setClientes);
     listProductos(db).then(setProds);
-    if (!editId) return;
+    if (!editId) {
+      if (!repetirId) return;
+      // Same client and products. The price is the one agreed with them; the cost is today's, since this batch isn't bought yet.
+      (async () => {
+        const p = await getPedido(db, repetirId);
+        if (!p) return;
+        const cid = (await db.getFirstAsync<{ cliente_id: number }>('SELECT cliente_id FROM pedidos WHERE id=?', repetirId))?.cliente_id ?? null;
+        setClienteId(cid);
+        setLineas(await db.getAllAsync<Linea>(
+          'SELECT i.producto_id, pr.nombre AS nombre, i.cantidad, pr.costo AS costo_unit, i.precio_unit FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id WHERE i.pedido_id=? ORDER BY i.id', repetirId));
+        notify(t('Copié el pedido de {nombre}. Cambia lo que quieras.', { nombre: p.cliente }));
+      })();
+      return;
+    }
     (async () => {
       const p = await getPedido(db, editId);
       if (!p) return router.back();
@@ -90,7 +104,7 @@ export default function PedidoWizard() {
       setLineas(await db.getAllAsync<Linea>(
         'SELECT producto_id, pr.nombre AS nombre, cantidad, costo_unit, precio_unit FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id WHERE pedido_id=? ORDER BY i.id', editId));
     })();
-  }, [db, editId, router, t]);
+  }, [db, editId, repetirId, router, t]);
 
   const atras = useCallback(() => { if (paso > 1 && !(editId && paso === 2)) irA(paso - 1); else router.back(); }, [paso, editId, router, irA]);
   useEffect(() => {
