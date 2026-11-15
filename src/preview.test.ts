@@ -11,6 +11,6 @@ test('la pagina de previews es la que sale de las mascotas de la app (si no: npm
 
 test('la pagina trae las seis mascotas con su nombre', () => {
   const html = generarHtml(leer('./Mascota.tsx'), leer('./mascotas.ts'));
-  for (const n of ['Pan', 'Bebida', 'Billete', 'Moneda', 'Bolsa', 'Cartera']) assert.ok(html.includes(`<figcaption>${n}</figcaption>`), n);
+  for (const n of ['Miga', 'Burbuja', 'Billy', 'Goldie', 'Becky', 'Carter']) assert.ok(html.includes(`<figcaption>${n}</figcaption>`), n);
   assert.equal((html.match(/<figure>/g) ?? []).length, 6);
 });
