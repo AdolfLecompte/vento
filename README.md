@@ -1,8 +1,10 @@
 # Vento
 
-[![Watch the Vento presentation](docs/img/vento.gif)](docs/vento.mp4)
+<video src="docs/vento.mp4" controls muted loop width="800">
+  <a href="docs/vento.mp4"><img src="docs/img/vento.gif" alt="Watch the Vento presentation"></a>
+</video>
 
-*Click the animation for the full-quality video (47 s).*
+*Presentation video (47 s, no sound).*
 
 A sales notebook for Android. You write down who ordered what, whether they have paid (and how), whether you have delivered it, and the app tells you your profit per product and per order. Your data lives only on your phone: no server, no accounts.
 
@@ -57,7 +59,7 @@ npx expo lint           # lint
 
 ### The presentation video
 
-`docs/vento.mp4` and the animation above come from the [HyperFrames](https://hyperframes.heygen.com) project in `promo/`. Its mascots are copied from the app's own drawings (`npm run preview`), so they always match. To change the video, edit `promo/src.tpl`, then run `node build.mjs` and `npx hyperframes render` inside `promo/`.
+`docs/vento.mp4` (and the GIF fallback in `docs/img/vento.gif`) come from the [HyperFrames](https://hyperframes.heygen.com) project in `promo/`. Its mascots are copied from the app's own drawings (`npm run preview`), so they always match. To change the video, edit `promo/src.tpl`, then run `node build.mjs` and `npx hyperframes render` inside `promo/`.
 
 ## How it is built
 
