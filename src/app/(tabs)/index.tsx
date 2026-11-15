@@ -3,7 +3,8 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { hoy, listDeudores, listPedidos, PedidoRow, porPrepararPorProducto } from '@/db';
-import { inicioSemana, sumarDias } from '@/fecha';
+import { etiquetaPeriodo, type Periodo, rangoPeriodo } from '@/fecha';
+import { CaretLeftIcon, CaretRightIcon } from '@/icons';
 import { PedidoCard } from '@/PedidoCard';
 import { space } from '@/theme';
 import { Burbuja, Mascota } from '@/Mascota';
@@ -33,21 +34,19 @@ export default function Inicio() {
   const router = useRouter();
   const [rows, setRows] = useState<PedidoRow[]>([]);
   const [prep, setPrep] = useState<{ nombre: string; unidades: number; pendientes: number; costo: number; venta: number }[]>([]);
-  const [semana, setSemana] = useState<'todo' | 'esta' | 'pasada'>('todo');
-  const [mes, setMes] = useState(true);
+  const [periodo, setPeriodo] = useState<Periodo>('mes'); // what profit, collections and the shopping list look at
+  const [desp, setDesp] = useState(0); // 0 = the current week/month, -1 = the one before...
   const [deudores, setDeudores] = useState<{ nombre: string; debe: number }[]>([]);
   const [idx, setIdx] = useState(0); // which of the mascot's messages is showing
-  const desde = mes ? hoy().slice(0, 8) + '01' : '';
-  const lunes = inicioSemana(hoy());
-  const [prepDesde, prepHasta] = semana === 'esta' ? [lunes, sumarDias(lunes, 6)] : semana === 'pasada' ? [sumarDias(lunes, -7), sumarDias(lunes, -1)] : ['', '9999-12-31'];
+  const { desde, hasta } = rangoPeriodo(periodo, desp, hoy());
 
   useFocusEffect(useCallback(() => {
     listPedidos(db).then(setRows);
     listDeudores(db).then(setDeudores);
-    porPrepararPorProducto(db, prepDesde, prepHasta).then(setPrep);
-  }, [db, prepDesde, prepHasta]));
+    porPrepararPorProducto(db, desde, hasta).then(setPrep);
+  }, [db, desde, hasta]));
 
-  const rango = rows.filter((r) => r.fecha >= desde);
+  const rango = rows.filter((r) => r.fecha >= desde && r.fecha <= hasta);
   const sum = (f: (r: PedidoRow) => number) => rango.reduce((a, r) => a + f(r), 0);
   const vendido = sum((r) => r.total);
   const vendidoEnt = rango.filter((r) => r.entregado).reduce((a, r) => a + r.total, 0); // the card below is about what was handed over
@@ -82,10 +81,18 @@ export default function Inicio() {
             </Row>
           </View>
         </Appear>
-        <Row>
-          <Chip block label={t('Este mes')} on={mes} onPress={() => { animar(); setMes(true); }} />
-          <Chip block label={t('Todo')} on={!mes} onPress={() => { animar(); setMes(false); }} />
+        <Row style={{ gap: space.sm, flexWrap: 'nowrap' }}>
+          {(['semana', 'mes', 'todo'] as const).map((k) => (
+            <Chip key={k} block label={k === 'semana' ? t('Semana') : k === 'mes' ? t('Mes') : t('Todo')} on={periodo === k} onPress={() => { animar(); setPeriodo(k); setDesp(0); }} />
+          ))}
         </Row>
+        {periodo !== 'todo' && (
+          <Row style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Tap onPress={() => setDesp((n) => n - 1)} label={t('Anterior')} style={{ padding: space.sm }}><CaretLeftIcon size={22} color={colors.primary} weight="bold" /></Tap>
+            <Label>{etiquetaPeriodo(periodo, desp, hoy(), t)}</Label>
+            <Tap onPress={() => desp < 0 && setDesp((n) => n + 1)} label={t('Siguiente')} style={{ padding: space.sm, opacity: desp < 0 ? 1 : 0.3 }}><CaretRightIcon size={22} color={colors.primary} weight="bold" /></Tap>
+          </Row>
+        )}
         <Appear delay={60}>
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>
             <Label color={colors.onPrimarySuave}>{t('Ganancia')}</Label>
@@ -134,11 +141,6 @@ export default function Inicio() {
         {porEntregar.length > 0 && (
           <>
             <Seccion titulo={t('Por preparar')} />
-            <Row style={{ gap: space.sm, flexWrap: 'nowrap' }}>
-              <Chip block label={t('Todo')} on={semana === 'todo'} onPress={() => { animar(); setSemana('todo'); }} />
-              <Chip block label={t('Esta semana')} on={semana === 'esta'} onPress={() => { animar(); setSemana('esta'); }} />
-              <Chip block label={t('Semana pasada')} on={semana === 'pasada'} onPress={() => { animar(); setSemana('pasada'); }} />
-            </Row>
             {prep.length === 0 ? <Small>{t('Nada por preparar en este rango.')}</Small> : (
               <>
                 <View style={{ backgroundColor: colors.primary, borderRadius: 24, padding: space.md, gap: space.xs }}>

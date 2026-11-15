@@ -27,3 +27,23 @@ export const mesMas = (y: number, m: number, n: number) => { const d = new Date(
 
 export const corta = (iso: string, t: T) => { const [y, m, d] = partes(iso); return `${d} ${t(MESES[m - 1])} ${y}`; };
 export const etiquetaDia = (iso: string, hoy: string, t: T) => (iso === hoy ? t('Hoy') : iso === sumarDias(hoy, -1) ? t('Ayer') : corta(iso, t));
+
+// The period Home looks at: a week (Monday to Sunday), a month, or everything. `desp` moves it back (-1 = the one before).
+export type Periodo = 'semana' | 'mes' | 'todo';
+export function rangoPeriodo(p: Periodo, desp: number, hoy: string) {
+  if (p === 'todo') return { desde: '', hasta: '9999-12-31' };
+  if (p === 'semana') { const lunes = sumarDias(inicioSemana(hoy), 7 * desp); return { desde: lunes, hasta: sumarDias(lunes, 6) }; }
+  const [y, m] = partes(hoy);
+  const f = mesMas(y, m, desp);
+  return { desde: `${f.y}-${dos(f.m)}-01`, hasta: `${f.y}-${dos(f.m)}-${dos(diasDelMes(f.y, f.m))}` };
+}
+
+export function etiquetaPeriodo(p: Periodo, desp: number, hoy: string, t: T) {
+  if (p === 'todo') return t('Todo');
+  if (desp === 0) return p === 'semana' ? t('Esta semana') : t('Este mes');
+  if (desp === -1) return p === 'semana' ? t('Semana pasada') : t('Mes pasado');
+  const { desde, hasta } = rangoPeriodo(p, desp, hoy);
+  const [y, m, d] = partes(desde), [y2, m2, d2] = partes(hasta);
+  const anio = y === partes(hoy)[0] ? '' : ` ${y}`;
+  return p === 'mes' ? `${t(MESES[m - 1])}${anio || ` ${y}`}` : `${d} ${t(MESES[m - 1])} – ${d2} ${t(MESES[m2 - 1])}${y2 === partes(hoy)[0] ? '' : ` ${y2}`}`;
+}

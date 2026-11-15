@@ -46,3 +46,17 @@ test('inicioSemana: lunes de esa semana (domingo cuenta con la semana que termin
   assert.equal(inicioSemana('2026-11-15'), '2026-11-09'); // Sunday
   assert.equal(inicioSemana('2026-01-01'), '2025-12-29'); // crosses the year
 });
+
+test('rangoPeriodo: semana de lunes a domingo, mes completo y todo, hacia atras', async () => {
+  const { rangoPeriodo, etiquetaPeriodo } = await import('./fecha.ts');
+  assert.deepEqual(rangoPeriodo('semana', 0, '2026-11-12'), { desde: '2026-11-09', hasta: '2026-11-15' });
+  assert.deepEqual(rangoPeriodo('semana', -1, '2026-11-12'), { desde: '2026-11-02', hasta: '2026-11-08' });
+  assert.deepEqual(rangoPeriodo('mes', 0, '2026-11-12'), { desde: '2026-11-01', hasta: '2026-11-30' });
+  assert.deepEqual(rangoPeriodo('mes', -2, '2026-01-15'), { desde: '2025-11-01', hasta: '2025-11-30' }); // crosses the year
+  assert.deepEqual(rangoPeriodo('mes', -9, '2026-11-12'), { desde: '2026-02-01', hasta: '2026-02-28' });
+  assert.deepEqual(rangoPeriodo('todo', 0, '2026-11-12'), { desde: '', hasta: '9999-12-31' });
+  assert.equal(etiquetaPeriodo('semana', 0, '2026-11-12', es), 'Esta semana');
+  assert.equal(etiquetaPeriodo('mes', -1, '2026-11-12', es), 'Mes pasado');
+  assert.equal(etiquetaPeriodo('mes', -3, '2026-11-12', es), 'ago 2026');
+  assert.equal(etiquetaPeriodo('semana', -3, '2026-11-12', en), '19 Oct – 25 Oct');
+});
