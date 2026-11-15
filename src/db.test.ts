@@ -81,15 +81,16 @@ test('busqueda: el pedido trae los nombres de sus productos', async () => {
   assert.equal((await getPedido(db, id))?.productos, 'Arepas · Jugo');
 });
 
-test('por preparar: solo lo sin entregar, por producto, con costo y venta, y filtra por fechas', async () => {
+test('por preparar: todo el rango (entregado o no), pendientes aparte, costo de hoy en lo pendiente', async () => {
   const { sq, db } = await nueva();
   sq.exec(`
     INSERT INTO pedidos VALUES (1,1,'2026-11-02',0),(2,2,'2026-11-04',0),(3,1,'2026-11-05',1),(4,2,'2026-10-20',0);
-    INSERT INTO pedido_items VALUES (1,1,1,2,1000,1500),(2,2,1,1,1000,1500),(3,2,2,4,500,900),(4,3,1,9,1000,1500),(5,4,2,1,500,900);
+    INSERT INTO pedido_items VALUES (1,1,1,2,900,1500),(2,2,1,1,900,1500),(3,2,2,4,500,900),(4,3,1,9,800,1500),(5,4,2,1,500,900);
   `);
+  // Arepas cost 1000 today: the 3 pending units use it (not the 900 saved), the 9 delivered keep the 800 saved with the order.
   assert.deepEqual(await porPrepararPorProducto(db, '2026-11-02', '2026-11-08'), [
-    { nombre: 'Arepas', unidades: 3, costo: 3000, venta: 4500 },
-    { nombre: 'Jugo', unidades: 4, costo: 2000, venta: 3600 },
-  ]); // the delivered order and the old one stay out
+    { nombre: 'Arepas', unidades: 12, pendientes: 3, costo: 3 * 1000 + 9 * 800, venta: 18000 },
+    { nombre: 'Jugo', unidades: 4, pendientes: 4, costo: 2000, venta: 3600 },
+  ]); // the old order (October) stays out
   assert.equal((await porPrepararPorProducto(db, '', '9999-12-31')).find((p) => p.nombre === 'Jugo')?.unidades, 5);
 });

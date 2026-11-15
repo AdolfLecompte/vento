@@ -86,13 +86,17 @@ export const listProductos = (db: SQLiteDatabase) =>
 export const listClientes = (db: SQLiteDatabase) =>
   db.getAllAsync<Cliente>('SELECT * FROM clientes ORDER BY nombre');
 
-// What the undelivered orders dated in [desde, hasta] still need, per product: units, what it costs (the money to put
-// in) and what it sells for. Biggest investment first.
+// What the orders dated in [desde, hasta] need, per product: units, how many are still undelivered, what it costs (the
+// money to put in) and what it sells for. Delivered orders stay in so the batch total does not shrink as you deliver.
+// Undelivered units are not bought yet, so they cost what the product costs today, not the cost saved with the order.
 export const porPrepararPorProducto = (db: SQLiteDatabase, desde: string, hasta: string) =>
-  db.getAllAsync<{ nombre: string; unidades: number; costo: number; venta: number }>(
-    `SELECT pr.nombre, SUM(i.cantidad) AS unidades, SUM(i.cantidad*i.costo_unit) AS costo, SUM(i.cantidad*i.precio_unit) AS venta
+  db.getAllAsync<{ nombre: string; unidades: number; pendientes: number; costo: number; venta: number }>(
+    `SELECT pr.nombre, SUM(i.cantidad) AS unidades,
+       SUM(CASE WHEN p.entregado=0 THEN i.cantidad ELSE 0 END) AS pendientes,
+       SUM(CASE WHEN p.entregado=0 THEN i.cantidad*pr.costo ELSE i.cantidad*i.costo_unit END) AS costo,
+       SUM(i.cantidad*i.precio_unit) AS venta
      FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id JOIN pedidos p ON p.id=i.pedido_id
-     WHERE p.entregado=0 AND p.fecha >= ? AND p.fecha <= ? GROUP BY pr.id ORDER BY costo DESC, pr.nombre`,
+     WHERE p.fecha >= ? AND p.fecha <= ? GROUP BY pr.id ORDER BY costo DESC, pr.nombre`,
     desde, hasta,
   );
 

@@ -59,7 +59,7 @@ export default function ClienteScreen() {
 
   if (!c) return null;
   const comprado = pedidos.reduce((a, p) => a + p.total, 0);
-  const debe = pedidos.reduce((a, p) => a + Math.max(0, p.total - p.pagado), 0);
+  const debe = pedidos.reduce((a, p) => a + (p.entregado ? Math.max(0, p.total - p.pagado) : 0), 0) // owed = delivered and unpaid, like everywhere else;
   const cambio = nombre.trim() !== c.nombre || (tel.trim() || null) !== (c.telefono || null);
 
   const guardar = async () => {

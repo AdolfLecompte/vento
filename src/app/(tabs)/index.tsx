@@ -32,7 +32,7 @@ export default function Inicio() {
   const db = useSQLiteContext();
   const router = useRouter();
   const [rows, setRows] = useState<PedidoRow[]>([]);
-  const [prep, setPrep] = useState<{ nombre: string; unidades: number; costo: number; venta: number }[]>([]);
+  const [prep, setPrep] = useState<{ nombre: string; unidades: number; pendientes: number; costo: number; venta: number }[]>([]);
   const [semana, setSemana] = useState<'todo' | 'esta' | 'pasada'>('todo');
   const [mes, setMes] = useState(true);
   const [deudores, setDeudores] = useState<{ nombre: string; debe: number }[]>([]);
@@ -50,16 +50,19 @@ export default function Inicio() {
   const rango = rows.filter((r) => r.fecha >= desde);
   const sum = (f: (r: PedidoRow) => number) => rango.reduce((a, r) => a + f(r), 0);
   const vendido = sum((r) => r.total);
-  const cobrado = sum((r) => r.pagado);
-  const ganancia = vendido - sum((r) => r.costo);
-  const porCobrar = rows.filter((r) => r.pagado < r.total).sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado));
+  const vendidoEnt = rango.filter((r) => r.entregado).reduce((a, r) => a + r.total, 0); // the card below is about what was handed over
+  const cobradoEnt = rango.filter((r) => r.entregado).reduce((a, r) => a + Math.min(r.pagado, r.total), 0);
+  const entregados = rango.filter((r) => r.entregado);
+  const ganancia = entregados.reduce((a, r) => a + r.total - r.costo, 0); // earned: only what was handed over
+  const gananciaPendiente = vendido - sum((r) => r.costo) - ganancia; // expected from orders not delivered yet
+  const porCobrar = rows.filter((r) => r.entregado && r.pagado < r.total).sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado));
   const porEntregar = rows.filter((r) => !r.entregado);
   const invertir = prep.reduce((a, p) => a + p.costo, 0);
   const cobrar = prep.reduce((a, p) => a + p.venta, 0);
   const mesDesde = hoy().slice(0, 8) + '01';
   const mensajes = mensajesInicio({
     pedidos: rows.length, deudores, porEntregar: porEntregar.length,
-    gananciaMes: rows.filter((r) => r.fecha >= mesDesde).reduce((a, r) => a + r.total - r.costo, 0),
+    gananciaMes: rows.filter((r) => r.entregado && r.fecha >= mesDesde).reduce((a, r) => a + r.total - r.costo, 0),
   }, money, t);
   const ir = (filtro: string) => router.navigate({ pathname: '/pedidos', params: { filtro } });
 
@@ -87,7 +90,8 @@ export default function Inicio() {
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>
             <Label color={colors.onPrimarySuave}>{t('Ganancia')}</Label>
             <Money kind="hero" value={ganancia} color={colors.onPrimary} />
-            <Small color={colors.onPrimarySuave}>{rango.length === 1 ? t('En 1 pedido') : t('En {n} pedidos', { n: rango.length })}</Small>
+            <Small color={colors.onPrimarySuave}>{entregados.length === 1 ? t('De 1 pedido entregado') : t('De {n} pedidos entregados', { n: entregados.length })}</Small>
+            {gananciaPendiente !== 0 && <Small color={colors.onPrimarySuave}>{t('+{monto} por entregar', { monto: money(gananciaPendiente) })}</Small>}
           </View>
         </Appear>
 
@@ -95,14 +99,14 @@ export default function Inicio() {
           <Card>
             <Row>
               <View style={{ flex: 1 }}><Label color={colors.muted}>{t('Cobrado')}</Label></View>
-              {vendido > 0 && <Label color={colors.primary}>{Math.round((cobrado / vendido) * 100)} %</Label>}
+              {vendidoEnt > 0 && <Label color={colors.primary}>{Math.round((cobradoEnt / vendidoEnt) * 100)} %</Label>}
             </Row>
-            <Money kind="title" value={cobrado} />
-            <Bar value={vendido > 0 ? cobrado / vendido : 0} />
+            <Money kind="title" value={cobradoEnt} />
+            <Bar value={vendidoEnt > 0 ? cobradoEnt / vendidoEnt : 0} />
             <Small>
-              {vendido === 0 ? t('Todavía no hay ventas en este periodo')
-                : cobrado >= vendido ? t('Ya cobraste todo lo vendido ({vendido})', { vendido: money(vendido) })
-                : t('Te faltan {falta} para llegar a los {vendido} vendidos', { falta: money(vendido - cobrado), vendido: money(vendido) })}
+              {vendidoEnt === 0 ? t('Todavía no hay entregas en este periodo')
+                : cobradoEnt >= vendidoEnt ? t('Ya cobraste todo lo entregado ({vendido})', { vendido: money(vendidoEnt) })
+                : t('Te deben {falta} de los {vendido} entregados', { falta: money(vendidoEnt - cobradoEnt), vendido: money(vendidoEnt) })}
             </Small>
           </Card>
         </Appear>
@@ -146,7 +150,7 @@ export default function Inicio() {
                   <Appear key={p.nombre} delay={i * 60}>
                     <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: space.md, gap: space.xs }}>
                       <Row>
-                        <View style={{ flex: 1 }}><Sub lines={1}>{`${p.nombre} ×${p.unidades}`}</Sub></View>
+                        <View style={{ flex: 1 }}><Sub lines={1}>{p.pendientes === p.unidades ? `${p.nombre} ×${p.unidades}` : `${p.nombre} ×${p.unidades} · ${t('{n} por entregar', { n: p.pendientes })}`}</Sub></View>
                         <Sub color={colors.primary}>{money(p.costo)}</Sub>
                       </Row>
                       <Small color={colors.muted}>
