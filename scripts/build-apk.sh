@@ -3,7 +3,24 @@
 # (scripts/sign-apk.sh) and leaves it in dist/vento-<version>.apk.
 # VENTO_DEBUG_SIGN=1 skips your key and keeps Expo's public debug key: only for trying the build, never to publish.
 set -e
-[ "$VENTO_DEBUG_SIGN" = 1 ] || ./scripts/sign-apk.sh --check # fail now, not after five minutes of building
+if [ "$VENTO_DEBUG_SIGN" != 1 ]; then
+  ./scripts/sign-apk.sh --check # fail now, not after five minutes of building
+  # Ask for the key password NOW and test it against the key store, so a typo costs seconds, not the whole build.
+  # sign-apk.sh picks it up from VENTO_KS_PASSWORD. Set that variable yourself to run unattended.
+  KEYSTORE="${VENTO_KEYSTORE:-$HOME/.vento/vento-release.jks}"
+  for intento in 1 2 3; do
+    if [ -z "$VENTO_KS_PASSWORD" ]; then
+      printf 'Key password: ' >&2
+      stty -echo 2>/dev/null; trap 'stty echo 2>/dev/null' EXIT
+      IFS= read -r VENTO_KS_PASSWORD; stty echo 2>/dev/null; printf '\n' >&2
+    fi
+    export VENTO_KS_PASSWORD
+    if keytool -list -keystore "$KEYSTORE" -alias "${VENTO_KEY_ALIAS:-vento}" -storepass:env VENTO_KS_PASSWORD >/dev/null 2>&1; then break; fi
+    echo "Wrong password ($intento/3)." >&2
+    unset VENTO_KS_PASSWORD
+    [ "$intento" = 3 ] && { echo "Giving up: nothing was built." >&2; exit 1; }
+  done
+fi
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 VERSION=$(node -p "require('./app.json').expo.version")
 CI=1 npx expo prebuild --platform android --no-install --clean
