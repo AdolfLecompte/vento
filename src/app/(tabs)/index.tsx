@@ -3,15 +3,15 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { hoy, listDeudores, listPedidos, PedidoRow, porPrepararPorProducto } from '@/db';
-import { etiquetaPeriodo, type Periodo, rangoPeriodo } from '@/fecha';
-import { CaretLeftIcon, CaretRightIcon } from '@/icons';
+import { type Periodo, rangoPeriodo } from '@/fecha';
+import { SelectorPeriodo } from '@/SelectorPeriodo';
 import { PedidoCard } from '@/PedidoCard';
 import { space } from '@/theme';
 import { Burbuja, Mascota } from '@/Mascota';
 import type { T } from '@/idioma';
 import { mensajesInicio, saludoHora } from '@/voz';
 import { useColors, useT, useTema } from '@/tema';
-import { animar, Appear, Bar, Body, Button, Card, Chip, Label, money, Money, Row, Screen, Small, Sub, Tap, Wordmark } from '@/ui';
+import { Appear, Bar, Body, Button, Card, Label, money, Money, Row, Screen, Small, Sub, Tap, Wordmark } from '@/ui';
 
 const saludo = (t: T) => saludoHora(new Date().getHours(), t);
 
@@ -39,6 +39,7 @@ export default function Inicio() {
   const [deudores, setDeudores] = useState<{ nombre: string; debe: number }[]>([]);
   const [idx, setIdx] = useState(0); // which of the mascot's messages is showing
   const { desde, hasta } = rangoPeriodo(periodo, desp, hoy());
+  const periodoActual = { periodo, desp };
 
   useFocusEffect(useCallback(() => {
     listPedidos(db).then(setRows);
@@ -81,18 +82,7 @@ export default function Inicio() {
             </Row>
           </View>
         </Appear>
-        <Row style={{ gap: space.sm, flexWrap: 'nowrap' }}>
-          {(['semana', 'mes', 'todo'] as const).map((k) => (
-            <Chip key={k} block label={k === 'semana' ? t('Semana') : k === 'mes' ? t('Mes') : t('Todo')} on={periodo === k} onPress={() => { animar(); setPeriodo(k); setDesp(0); }} />
-          ))}
-        </Row>
-        {periodo !== 'todo' && (
-          <Row style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Tap onPress={() => setDesp((n) => n - 1)} label={t('Anterior')} style={{ padding: space.sm }}><CaretLeftIcon size={22} color={colors.primary} weight="bold" /></Tap>
-            <Label>{etiquetaPeriodo(periodo, desp, hoy(), t)}</Label>
-            <Tap onPress={() => desp < 0 && setDesp((n) => n + 1)} label={t('Siguiente')} style={{ padding: space.sm, opacity: desp < 0 ? 1 : 0.3 }}><CaretRightIcon size={22} color={colors.primary} weight="bold" /></Tap>
-          </Row>
-        )}
+        <SelectorPeriodo valor={periodoActual} onChange={(r) => { setPeriodo(r.periodo); setDesp(r.desp); }} />
         <Appear delay={60}>
           <View style={{ backgroundColor: colors.primary, borderRadius: 28, padding: space.lg, gap: space.xs }}>
             <Label color={colors.onPrimarySuave}>{t('Ganancia')}</Label>

@@ -5,10 +5,11 @@ import { SectionList, View } from 'react-native';
 import { coincide } from '@/busqueda';
 import { completo } from '@/calc';
 import { hoy, listPedidos, PedidoRow } from '@/db';
-import { corta, etiquetaDia } from '@/fecha';
+import { corta, etiquetaDia, rangoPeriodo } from '@/fecha';
 import { agruparPorDia } from '@/historial';
 import { Vacio } from '@/Mascota';
 import { PedidoCard } from '@/PedidoCard';
+import { type Rango, SelectorPeriodo } from '@/SelectorPeriodo';
 import { space } from '@/theme';
 import { useT } from '@/tema';
 import { Buscador, Header, Label, miles, money, Row, Screen, Small } from '@/ui';
@@ -20,14 +21,16 @@ export default function Historial() {
   const t = useT();
   const [rows, setRows] = useState<PedidoRow[]>([]);
   const [q, setQ] = useState('');
+  const [per, setPer] = useState<Rango>({ periodo: 'todo', desp: 0 });
   useFocusEffect(useCallback(() => { listPedidos(db).then(setRows); }, [db]));
 
   const secciones = useMemo(() => {
     const hoyS = hoy();
-    const lista = rows.filter((r) => completo(r.total, r.pagado, !!r.entregado)
+    const { desde, hasta } = rangoPeriodo(per.periodo, per.desp, hoyS);
+    const lista = rows.filter((r) => r.fecha >= desde && r.fecha <= hasta && completo(r.total, r.pagado, !!r.entregado)
       && coincide(q, r.cliente, r.productos, r.fecha, corta(r.fecha, t), r.total, miles(r.total)));
     return agruparPorDia(lista).map((g) => ({ titulo: etiquetaDia(g.fecha, hoyS, t), total: g.total, data: g.items }));
-  }, [rows, q, t]);
+  }, [rows, q, per, t]);
 
   return (
     <Screen bottom>
@@ -42,6 +45,7 @@ export default function Historial() {
           <View style={{ gap: space.sm, marginBottom: space.sm }}>
             <Small>{t('Entregados y pagados')}</Small>
             <Buscador value={q} onChange={setQ} placeholder={t('Buscar por cliente, producto o fecha')} />
+            <SelectorPeriodo valor={per} onChange={setPer} />
           </View>
         }
         renderSectionHeader={({ section }) => (
