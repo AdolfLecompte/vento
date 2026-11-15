@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { ReactNode, useCallback, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
   cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
@@ -99,18 +99,21 @@ const CUERPOS: Record<MascotaId, { dibujo: ReactNode; cara: Cara }> = {
   },
 };
 
-function Ojos({ cara, parpadeo }: { cara: Cara; parpadeo: { value: number } }) {
-  const props = useAnimatedProps(() => ({ ry: 3.6 * parpadeo.value }));
+// `mira` (-1..1) slides the eyes sideways, so it looks around now and then.
+function Ojos({ cara, parpadeo, mira }: { cara: Cara; parpadeo: { value: number }; mira: { value: number } }) {
+  const izq = useAnimatedProps(() => ({ ry: 3.6 * parpadeo.value, cx: cara.x - cara.sep / 2 + 2.4 * mira.value }));
+  const der = useAnimatedProps(() => ({ ry: 3.6 * parpadeo.value, cx: cara.x + cara.sep / 2 + 2.4 * mira.value }));
   return (
     <>
-      <AEllipse cx={cara.x - cara.sep / 2} cy={cara.y} rx={3.4} fill={cara.color} animatedProps={props} />
-      <AEllipse cx={cara.x + cara.sep / 2} cy={cara.y} rx={3.4} fill={cara.color} animatedProps={props} />
+      <AEllipse cx={cara.x - cara.sep / 2} cy={cara.y} rx={3.4} fill={cara.color} animatedProps={izq} />
+      <AEllipse cx={cara.x + cara.sep / 2} cy={cara.y} rx={3.4} fill={cara.color} animatedProps={der} />
     </>
   );
 }
 
-// A friendly mascot. It breathes and blinks only while its screen is in front (tabs stay mounted, and endless
-// animations on hidden screens would drain the battery), and it hops when tapped or when `saludo` changes.
+// A friendly mascot. It breathes, sways, blinks, looks around and every few seconds does a little trick (hop, wiggle,
+// double hop, turn around), only while its screen is in front (tabs stay mounted, and endless animations on hidden
+// screens would drain the battery). Tapping it or changing `saludo` does the next trick.
 // `feliz` gives it a big smile with happy closed eyes (used when something was saved).
 export function Mascota({ id, size = 80, animada = true, saludo = 0, onPress, feliz = false }: {
   id: MascotaId; size?: number; animada?: boolean; saludo?: number; onPress?: () => void; feliz?: boolean;
@@ -121,29 +124,63 @@ export function Mascota({ id, size = 80, animada = true, saludo = 0, onPress, fe
   const respira = useSharedValue(0);
   const parpadeo = useSharedValue(1);
   const salto = useSharedValue(0);
+  const giro = useSharedValue(0); // degrees, for the wiggle
+  const vuelta = useSharedValue(1); // 1 -> -1 -> 1: turns around like a coin
+  const mira = useSharedValue(0);
+  const truco = useRef(0);
 
+  // The tricks, one after another: hop, wiggle, double hop, turn around.
+  const hacerTruco = useCallback(() => {
+    if (reducido) return;
+    const arriba = (h: number, d: number) => withSequence(withTiming(-size * h, { duration: d, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: d + 40, easing: Easing.in(Easing.quad) }));
+    const n = truco.current++ % 4;
+    if (n === 0) {
+      salto.set(arriba(0.16, 170));
+      parpadeo.set(withSequence(withTiming(0.15, { duration: 120 }), withDelay(450, withTiming(1, { duration: 150 })))); // a happy squint
+    } else if (n === 1) {
+      giro.set(withSequence(withTiming(-9, { duration: 90 }), withTiming(9, { duration: 140 }), withTiming(-6, { duration: 120 }), withTiming(6, { duration: 120 }), withTiming(0, { duration: 90 })));
+    } else if (n === 2) {
+      salto.set(withSequence(arriba(0.1, 120), arriba(0.18, 150)));
+    } else {
+      vuelta.set(withSequence(withTiming(-1, { duration: 280, easing: Easing.inOut(Easing.quad) }), withDelay(120, withTiming(1, { duration: 280, easing: Easing.inOut(Easing.quad) }))));
+      salto.set(arriba(0.08, 200));
+    }
+  }, [reducido, size, salto, parpadeo, giro, vuelta]);
   useFocusEffect(useCallback(() => {
     if (!vivo) return;
     respira.set(withRepeat(withSequence(withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 1600, easing: Easing.inOut(Easing.quad) })), -1));
-    let t: ReturnType<typeof setTimeout>;
+    let t: ReturnType<typeof setTimeout>, m: ReturnType<typeof setTimeout>, g: ReturnType<typeof setTimeout>;
     const siguiente = () => {
       t = setTimeout(() => {
         parpadeo.set(withSequence(withTiming(0.1, { duration: 90 }), withTiming(1, { duration: 130 })));
         siguiente();
       }, 2600 + Math.random() * 1800);
     };
-    siguiente();
-    return () => { clearTimeout(t); cancelAnimation(respira); cancelAnimation(parpadeo); respira.set(0); parpadeo.set(1); };
-  }, [vivo, respira, parpadeo]));
+    const mirar = () => {
+      m = setTimeout(() => {
+        mira.set(withTiming([-1, 0, 1][Math.floor(Math.random() * 3)], { duration: 240 }));
+        mirar();
+      }, 1500 + Math.random() * 2000);
+    };
+    const jugar = () => {
+      g = setTimeout(() => { hacerTruco(); jugar(); }, 3500 + Math.random() * 3500);
+    };
+    siguiente(); mirar(); jugar();
+    return () => {
+      clearTimeout(t); clearTimeout(m); clearTimeout(g);
+      [respira, parpadeo, salto, giro, vuelta, mira].forEach(cancelAnimation);
+      respira.set(0); parpadeo.set(1); salto.set(0); giro.set(0); vuelta.set(1); mira.set(0);
+    };
+  }, [vivo, respira, parpadeo, salto, giro, vuelta, mira, hacerTruco]));
 
-  const hop = useCallback(() => {
-    if (reducido) return;
-    salto.set(withSequence(withTiming(-size * 0.16, { duration: 170, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 210, easing: Easing.in(Easing.quad) })));
-    parpadeo.set(withSequence(withTiming(0.15, { duration: 120 }), withDelay(450, withTiming(1, { duration: 150 })))); // a happy squint
-  }, [reducido, size, salto, parpadeo]);
-  useEffect(() => { if (saludo) hop(); }, [saludo, hop]);
+  useEffect(() => { if (saludo) hacerTruco(); }, [saludo, hacerTruco]);
 
-  const cuerpoAnim = useAnimatedStyle(() => ({ transform: [{ translateY: salto.value }, { scaleY: 1 + 0.035 * respira.value }, { scaleX: 1 - 0.015 * respira.value }] }));
+  const cuerpoAnim = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: salto.value }, { rotate: `${giro.value + 1.6 * (respira.value - 0.5)}deg` }, // a slow sway while it breathes
+      { scaleY: 1 + 0.035 * respira.value }, { scaleX: (1 - 0.015 * respira.value) * vuelta.value },
+    ],
+  }));
   const { dibujo, cara } = CUERPOS[id];
   const vista = (
     <Animated.View style={[{ width: size, height: size, transformOrigin: '50% 100%' }, cuerpoAnim]}>
@@ -159,7 +196,7 @@ export function Mascota({ id, size = 80, animada = true, saludo = 0, onPress, fe
           </>
         ) : (
           <>
-            <Ojos cara={cara} parpadeo={parpadeo} />
+            <Ojos cara={cara} parpadeo={parpadeo} mira={mira} />
             <Path d={`M${cara.x - 6} ${cara.y + 7} Q${cara.x} ${cara.y + 13} ${cara.x + 6} ${cara.y + 7}`} stroke={cara.color} strokeWidth={2.6} strokeLinecap="round" fill="none" />
           </>
         )}
@@ -171,7 +208,7 @@ export function Mascota({ id, size = 80, animada = true, saludo = 0, onPress, fe
   // around it (e.g. the mascot picker) would never receive the tap.
   if (!animada) return <View pointerEvents="none" style={{ width: size, height: size }}>{vista}</View>;
   return (
-    <Pressable onPress={() => { hop(); onPress?.(); }} accessibilityRole="image" accessibilityLabel={t('Tu mascota')} style={{ width: size, height: size }}>
+    <Pressable onPress={() => { hacerTruco(); onPress?.(); }} accessibilityRole="image" accessibilityLabel={t('Tu mascota')} style={{ width: size, height: size }}>
       {vista}
     </Pressable>
   );
