@@ -38,7 +38,7 @@ test('el verde de siempre no cambia el aspecto claro de antes', () => {
 
 test('valores guardados desconocidos no se aceptan', () => {
   assert.equal(esAcento('azul'), true);
-  assert.equal(esAcento('fucsia'), false);
+  assert.equal(esAcento('magenta'), false);
   assert.equal(esPreferencia('auto'), true);
   assert.equal(esPreferencia('negro'), false);
 });

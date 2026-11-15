@@ -43,12 +43,8 @@ export default function Apariencia() {
         <Appear delay={45}>
           <Card>
             <Sub>{t('Divisa')}</Sub>
-            <Row style={{ alignItems: 'center', gap: space.md, flexWrap: 'nowrap' }}>
-              <Logo size={72} />
-              <View style={{ flex: 1 }}>
-                <Segment<string> value={divisa} onChange={(k) => elegir('divisa', k)} options={DIVISAS.map((d) => ({ k: d.id, label: d.simbolo }))} />
-              </View>
-            </Row>
+            <View style={{ alignItems: 'center', paddingVertical: space.sm }}><Logo size={88} /></View>
+            <Segment<string> value={divisa} onChange={(k) => elegir('divisa', k)} options={DIVISAS.map((d) => ({ k: d.id, label: d.simbolo }))} />
             <Small>{t('Solo cambia el símbolo del logo: los montos no se convierten.')}</Small>
           </Card>
         </Appear>
@@ -67,14 +63,14 @@ export default function Apariencia() {
         <Appear delay={120}>
           <Card>
             <Sub>{t('Color')}</Sub>
-            {[ACENTOS.slice(0, 3), ACENTOS.slice(3)].map((fila, i) => (
+            {[ACENTOS.slice(0, 4), ACENTOS.slice(4, 8), ACENTOS.slice(8)].map((fila, i) => (
               <Row key={i} style={{ justifyContent: 'space-between' }}>
                 {fila.map((a) => {
                   const activo = a.id === acento;
                   return (
                     <Tap key={a.id} onPress={() => elegir('acento', a.id)} label={t('Color {nombre}', { nombre: t(a.nombre) })} style={{ alignItems: 'center', gap: 6, flex: 1 }}>
-                      <View style={{ width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: activo ? colors.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                        <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: a.hex, alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 56, height: 56, borderRadius: 28, borderWidth: 3, borderColor: activo ? colors.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: a.hex, alignItems: 'center', justifyContent: 'center' }}>
                           {activo && <CheckIcon size={24} color="#FFFFFF" weight="bold" />}
                         </View>
                       </View>

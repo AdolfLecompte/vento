@@ -10,6 +10,12 @@ export const ACENTOS = [
   { id: 'rosa', nombre: 'Rosa', hex: '#DB2777' },
   { id: 'naranja', nombre: 'Naranja', hex: '#EA580C' },
   { id: 'turquesa', nombre: 'Turquesa', hex: '#0D9488' },
+  { id: 'indigo', nombre: 'Índigo', hex: '#4F46E5' },
+  { id: 'cian', nombre: 'Cian', hex: '#0891B2' },
+  { id: 'lima', nombre: 'Lima', hex: '#4D7C0F' },
+  { id: 'fucsia', nombre: 'Fucsia', hex: '#C026D3' },
+  { id: 'cafe', nombre: 'Café', hex: '#92400E' },
+  { id: 'pizarra', nombre: 'Pizarra', hex: '#475569' },
 ] as const;
 export type AcentoId = (typeof ACENTOS)[number]['id'];
 
