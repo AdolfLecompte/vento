@@ -32,7 +32,7 @@ function clavesDelCodigo() {
 const dinamicas = () => new Set<string>([
   ...ACENTOS.map((a) => a.nombre), ...MASCOTAS.map((m) => m.nombre), ...MEDIOS, ...MESES, ...CABECERAS_CSV,
   ...Object.keys(pagoColores(paleta('#16A34A', 'claro'))),
-  'Borrar', 'Quitar', 'Restaurar', 'Descargar', 'Cancelar', 'Más tarde', // the confirm button labels (confirm(title, ok, message, no): the dialog translates them)
+  'Borrar', 'Quitar', 'Restaurar', 'Descargar', 'Continuar', 'Cancelar', 'Más tarde', // the confirm button labels (confirm(title, ok, message, no): the dialog translates them)
   'L', 'M', 'X', 'J', 'V', 'S', 'D', // weekday initials of the calendar, Monday first
 ]);
 

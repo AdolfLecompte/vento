@@ -27,7 +27,7 @@ The APK for each version is in [Releases](../../releases). Download it on your p
 
 ## Permissions and privacy
 
-Your data never leaves the phone: no server, no accounts. The app uses the internet for **one thing only**: asking GitHub whether there is a new version (once a day; turn it off in More → Version), and it sends nothing of yours. It also asks for what the reminder needs (notifications, vibration and rescheduling the alerts after a reboot). Backups go to the folder you pick with the system picker.
+Your data never leaves the phone: no server, no accounts. The app uses the internet for **one thing only**: asking GitHub whether there is a new version (once a day; turn it off in More → Version), and it sends nothing of yours. When a new version exists, More → Version can download it and open Android's installer; for that it asks to install apps (you confirm every install, and Android only accepts an update signed with the same key). It also asks for what the reminder needs (notifications, vibration and rescheduling the alerts after a reboot). Backups go to the folder you pick with the system picker.
 
 ## Run it
 
@@ -40,7 +40,7 @@ npx expo start
 
 Scan the QR code with Expo Go. If something doesn't update, run `npx expo start --clear`.
 
-Note: Expo Go on Android can't create the notification channel, so the reminder uses the system's default channel and does not hide its details on the lock screen. That only works in an installed build (APK).
+Note: the reminder notifications (they use a native library) only work in an installed build (APK); in Expo Go they are simply off.
 
 ### Tests and checks
 

@@ -1,8 +1,9 @@
+import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { notificarAhora, reprogramar } from '@/avisos';
-import { abrirDescarga, buscarActualizacion } from '@/actualizaciones';
+import { buscarActualizacion } from '@/actualizaciones';
 import { copiaAutomatica } from '@/backup';
 import { getAjuste, hoy, setAjuste } from '@/db';
 import { confirm, notify } from '@/feedback';
@@ -13,6 +14,7 @@ import { useT } from '@/tema';
 // "due" is checked at these moments: opening the app (toasts tell you) or leaving it (a system notification does).
 export function AvisosHost() {
   const db = useSQLiteContext();
+  const router = useRouter();
   const t = useT();
   const trabajando = useRef(false);
   useEffect(() => {
@@ -43,8 +45,8 @@ export function AvisosHost() {
     buscarActualizacion(db).then(async (r) => {
       if (r?.estado !== 'nueva' || !r.release) return;
       const { release } = r;
-      if (await confirm(t('Hay una versión nueva: Vento {version}', { version: release.version }), 'Descargar', release.notas.trim() || undefined, 'Más tarde')) abrirDescarga(release);
+      if (await confirm(t('Hay una versión nueva: Vento {version}', { version: release.version }), 'Descargar', release.notas.trim() || undefined, 'Más tarde')) router.push({ pathname: '/novedades', params: { actualizar: '1' } });
     }).catch(() => {});
-  }, [db, t]);
+  }, [db, t, router]);
   return null;
 }

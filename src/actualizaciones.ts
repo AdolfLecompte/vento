@@ -1,4 +1,6 @@
 import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as IntentLauncher from 'expo-intent-launcher';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Linking } from 'react-native';
 import pkg from '../package.json';
@@ -38,5 +40,31 @@ export async function buscarActualizacion(db: SQLiteDatabase, forzar = false): P
 }
 
 // Opens the APK link in the browser, which downloads it; tapping the download installs the update over the old app
-// (it only installs because it is signed with the same key).
+// (it only installs because it is signed with the same key). Fallback when the in-app download fails.
 export const abrirDescarga = (r: Release) => Linking.openURL(r.apk ?? r.pagina);
+
+// Downloads the APK into the cache reporting progress (0..1) and hands it to Android's installer, which asks the user to
+// confirm. Android refuses an update not signed with the same key, so no checksum is verified here (hashing 50 MB in
+// JavaScript is slow). Resolves false if the user cancelled; any other failure throws so the caller can fall back to the browser.
+let descarga: FileSystem.DownloadResumable | null = null;
+let cancelada = false;
+export const cancelarDescarga = () => { cancelada = true; descarga?.cancelAsync().catch(() => {}); };
+
+export async function descargarEInstalar(r: Release, onProgreso: (fraccion: number) => void) {
+  if (!r.apk) throw new Error('This release has no APK');
+  cancelada = false;
+  const destino = `${FileSystem.cacheDirectory}vento-${r.version}.apk`;
+  await FileSystem.deleteAsync(destino, { idempotent: true });
+  descarga = FileSystem.createDownloadResumable(r.apk, destino, {}, (p) =>
+    onProgreso(p.totalBytesExpectedToWrite > 0 ? p.totalBytesWritten / p.totalBytesExpectedToWrite : 0));
+  let res;
+  try { res = await descarga.downloadAsync(); } catch (e) { if (cancelada) return false; throw e; } finally { descarga = null; }
+  if (cancelada) return false;
+  if (!res || res.status !== 200) throw new Error(`Download failed (${res?.status})`);
+  await IntentLauncher.startActivityAsync('android.intent.action.INSTALL_PACKAGE', {
+    data: await FileSystem.getContentUriAsync(destino),
+    flags: 1, // FLAG_GRANT_READ_URI_PERMISSION: the installer may read our cache file
+    type: 'application/vnd.android.package-archive',
+  });
+  return true;
+}
