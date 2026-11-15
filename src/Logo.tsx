@@ -2,9 +2,10 @@ import Svg, { Defs, G, Mask, Path, Polygon, Rect } from 'react-native-svg';
 import { useTema } from '@/tema';
 import { divisaPorId } from '@/divisas';
 
-// The Vento mark: two arrows going opposite ways and a box with the chosen currency symbol. Same geometry as
+// The Vento mark: a box with the chosen currency symbol and two corner arrows (down-left, up-right) tucked behind it, with the tips of a vertical pair. Same geometry as
 // scripts/make-logo.py (which draws the launcher icon); the rim and the symbol are cut out, so it sits on any colour.
-const ARROW = '40,66 342,66 342,26 430,105 342,184 342,146 40,146';
+const PIEZAS = ['43,198 73,222 128,176 143,178 169,314 169,324 43,324', '220,84 250,112 190,112'];
+const GIRO = 'rotate(180 235.5 212)';
 const S = 2.1;
 const MASK = { maskUnits: 'userSpaceOnUse' as const, x: -200, y: -200, width: 900, height: 900 };
 const caja = (
@@ -31,10 +32,10 @@ export function Logo({ size = 96, color }: { size?: number; color?: string }) {
           </G>
         </Mask>
       </Defs>
-      <G transform={`translate(${512 - 236.5 * S} ${512 - 213 * S}) scale(${S})`}>
-        <G mask="url(#recorte)" fill={c} stroke={c} strokeWidth={12} strokeLinejoin="round">
-          <Polygon points={ARROW} />
-          <Polygon points={ARROW} transform="rotate(180 236.5 213)" />
+      <G transform={`translate(${512 - 235.5 * S} ${512 - 212 * S}) scale(${S})`}>
+        <G mask="url(#recorte)" fill={c} stroke={c} strokeWidth={8} strokeLinejoin="round">
+          {PIEZAS.map((p) => <Polygon key={p} points={p} />)}
+          {PIEZAS.map((p) => <Polygon key={`g${p}`} points={p} transform={GIRO} />)}
         </G>
         <G mask="url(#simbolo)" fill={c}>{caja}</G>
       </G>

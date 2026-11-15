@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AvisosHost } from '@/AvisosHost';
 import { migrate } from '@/db';
 import { Feedback } from '@/feedback';
+import { Splash } from '@/Splash';
 import { TemaProvider, useTema } from '@/tema';
 
 // Everything that paints sits under TemaProvider, which needs the database (it keeps the settings there).
@@ -18,6 +19,7 @@ function Pantallas() {
       <AvisosHost />
       <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 280, contentStyle: { backgroundColor: colors.bg } }} />
       <Feedback />
+      <Splash />
     </>
   );
 }
