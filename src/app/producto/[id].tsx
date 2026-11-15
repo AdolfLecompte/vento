@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { listProductos, Producto } from '@/db';
+import { actualizarCostoPendientes, listProductos, Producto } from '@/db';
 import { confirm, notify } from '@/feedback';
 import { TrashIcon } from '@/icons';
 import { space } from '@/theme';
@@ -23,6 +23,7 @@ export default function ProductoScreen() {
   const [nombre, setNombre] = useState('');
   const [cat, setCat] = useState('');
   const [costo, setCosto] = useState(0);
+  const costoInicial = useRef(0); // to know if the cost changed when saving
   const [precio, setPrecio] = useState(0);
   const [listo, setListo] = useState(esNuevo);
 
@@ -30,7 +31,7 @@ export default function ProductoScreen() {
     listProductos(db).then((ps: Producto[]) => {
       setCats([...new Set(ps.map((p) => p.categoria).filter((c): c is string => !!c))].sort());
       const p = ps.find((x) => x.id === Number(id));
-      if (p) { setNombre(p.nombre); setCat(p.categoria ?? ''); setCosto(p.costo); setPrecio(p.precio); }
+      if (p) { setNombre(p.nombre); setCat(p.categoria ?? ''); setCosto(p.costo); costoInicial.current = p.costo; setPrecio(p.precio); }
       setListo(true);
     });
   }, [db, id]);
@@ -38,7 +39,10 @@ export default function ProductoScreen() {
   const guardar = async () => {
     if (!nombre.trim()) return notify(t('Ponle un nombre al producto'), 'aviso');
     if (esNuevo) await db.runAsync('INSERT INTO productos(nombre,costo,precio,categoria) VALUES(?,?,?,?)', nombre.trim(), costo, precio, cat.trim() || null);
-    else await db.runAsync('UPDATE productos SET nombre=?, categoria=?, costo=?, precio=? WHERE id=?', nombre.trim(), cat.trim() || null, costo, precio, Number(id));
+    else {
+      await db.runAsync('UPDATE productos SET nombre=?, categoria=?, costo=?, precio=? WHERE id=?', nombre.trim(), cat.trim() || null, costo, precio, Number(id));
+      if (costo !== costoInicial.current) await actualizarCostoPendientes(db, Number(id), costo);
+    }
     notify(esNuevo ? t('Listo, guardé el producto') : t('Listo, guardé los cambios'));
     router.dismissTo('/productos');
   };

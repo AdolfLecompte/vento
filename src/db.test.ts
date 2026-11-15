@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { base } from './db-memoria.ts';
-import { borrarCliente, getPedido, guardarPedido, lineasParaRepetir, listClientesConDeuda, listDeudores, listPorEntregar, migrate, porPrepararPorProducto, type Linea } from './db.ts';
+import { actualizarCostoPendientes, borrarCliente, getPedido, guardarPedido, lineasParaRepetir, listClientesConDeuda, listDeudores, listPorEntregar, migrate, porPrepararPorProducto, type Linea } from './db.ts';
 
 async function nueva() {
   const { sq, db } = base();
@@ -81,17 +81,16 @@ test('busqueda: el pedido trae los nombres de sus productos', async () => {
   assert.equal((await getPedido(db, id))?.productos, 'Arepas · Jugo');
 });
 
-test('por preparar: todo el rango (entregado o no), pendientes aparte, costo de hoy en lo pendiente', async () => {
+test('por preparar: todo el rango (entregado o no), pendientes aparte, con el costo de cada linea', async () => {
   const { sq, db } = await nueva();
   sq.exec(`
     INSERT INTO pedidos VALUES (1,1,'2026-11-02',0),(2,2,'2026-11-04',0),(3,1,'2026-11-05',1),(4,2,'2026-10-20',0);
-    INSERT INTO pedido_items VALUES (1,1,1,2,900,1500),(2,2,1,1,900,1500),(3,2,2,4,500,900),(4,3,1,9,800,1500),(5,4,2,1,500,900);
+    INSERT INTO pedido_items VALUES (1,1,1,2,1000,1500),(2,2,1,1,1000,1500),(3,2,2,4,500,900),(4,3,1,9,800,1500),(5,4,2,1,500,900);
   `);
-  // Arepas cost 1000 today: the 3 pending units use it (not the 900 saved), the 9 delivered keep the 800 saved with the order.
   assert.deepEqual(await porPrepararPorProducto(db, '2026-11-02', '2026-11-08'), [
     { nombre: 'Arepas', unidades: 12, pendientes: 3, costo: 3 * 1000 + 9 * 800, venta: 18000 },
     { nombre: 'Jugo', unidades: 4, pendientes: 4, costo: 2000, venta: 3600 },
-  ]); // the old order (October) stays out
+  ]); // the old order (October) stays out; the delivered one keeps its own cost
   assert.equal((await porPrepararPorProducto(db, '', '9999-12-31')).find((p) => p.nombre === 'Jugo')?.unidades, 5);
 });
 
@@ -135,4 +134,32 @@ test('por preparar: un pedido pagado pero sin entregar cuenta como pendiente', a
   `);
   const [fila] = await porPrepararPorProducto(db, '2026-11-09', '2026-11-15');
   assert.deepEqual(fila, { nombre: 'Jugo', unidades: 4, pendientes: 4, costo: 2000, venta: 3600 });
+});
+
+test('costo del producto: las lineas de pedidos sin entregar lo siguen, las entregadas no', async () => {
+  const { sq, db, filas } = await nueva();
+  sq.exec(`
+    INSERT INTO pedidos VALUES (1,1,'2026-11-01',1),(2,1,'2026-11-02',0);
+    INSERT INTO pedido_items VALUES (1,1,1,1,900,1500),(2,2,1,1,900,1500),(3,2,2,1,400,900);
+  `);
+  await actualizarCostoPendientes(db, 1, 1100);
+  const costos = filas('SELECT id, costo_unit FROM pedido_items ORDER BY id').map((r) => r.costo_unit);
+  assert.deepEqual(costos, [900, 1100, 400]); // delivered stays 900, pending Arepas follows, Jugo untouched
+});
+
+test('migrate: pone una sola vez al dia el costo de lo pendiente y respeta lo editado despues', async () => {
+  const { sq, db } = base();
+  await migrate(db as never);
+  sq.exec(`
+    INSERT INTO clientes(id,nombre) VALUES (1,'Ana');
+    INSERT INTO productos(id,nombre,costo,precio,categoria) VALUES (1,'Arepas',1000,1500,NULL);
+    INSERT INTO pedidos VALUES (1,1,'2026-11-01',0),(2,1,'2026-11-02',1);
+    INSERT INTO pedido_items VALUES (1,1,1,1,800,1500),(2,2,1,1,800,1500);
+    DELETE FROM ajustes WHERE clave='costos_al_dia';
+  `);
+  await migrate(db as never); // an older database: the pending line is brought in line, the delivered one is not
+  assert.deepEqual(sq.prepare('SELECT costo_unit FROM pedido_items ORDER BY id').all().map((r) => r.costo_unit), [1000, 800]);
+  sq.exec('UPDATE pedido_items SET costo_unit=1234 WHERE id=1');
+  await migrate(db as never); // opening the app again must not undo a cost edited by hand
+  assert.equal(sq.prepare('SELECT costo_unit FROM pedido_items WHERE id=1').get()?.costo_unit, 1234);
 });

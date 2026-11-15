@@ -3,7 +3,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { coincide } from '@/busqueda';
-import { completo } from '@/calc';
+import { completo, deuda } from '@/calc';
 import { listPedidos, PedidoRow } from '@/db';
 import { corta } from '@/fecha';
 import { ClockCounterClockwiseIcon } from '@/icons';
@@ -30,7 +30,7 @@ export default function Pedidos() {
 
   const lista = useMemo(() => rows.filter((r) =>
     !completo(r.total, r.pagado, !!r.entregado)
-    && (f === 'cobrar' ? !!r.entregado && r.pagado < r.total : f === 'entregar' ? !r.entregado : true)
+    && (f === 'cobrar' ? deuda(r) > 0 : f === 'entregar' ? !r.entregado : true)
     && coincide(q, r.cliente, r.productos, r.fecha, corta(r.fecha, t), r.total, miles(r.total))), [rows, q, f, t]);
 
   const pick = (x: Filtro) => { animar(); router.setParams({ filtro: x }); };

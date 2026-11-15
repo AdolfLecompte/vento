@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { resumen } from '@/calc';
+import { deuda, resumen } from '@/calc';
 import { hoy, listDeudores, listPedidos, PedidoRow, porPrepararPorProducto } from '@/db';
 import { type Periodo, rangoPeriodo } from '@/fecha';
 import { SelectorPeriodo } from '@/SelectorPeriodo';
@@ -50,7 +50,7 @@ export default function Inicio() {
 
   const rango = rows.filter((r) => r.fecha >= desde && r.fecha <= hasta);
   const { entregados, ganancia, gananciaPendiente, vendidoEnt, cobradoEnt } = resumen(rango);
-  const porCobrar = rows.filter((r) => r.entregado && r.pagado < r.total).sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado));
+  const porCobrar = rows.filter((r) => deuda(r) > 0).sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado));
   const porEntregar = rows.filter((r) => !r.entregado);
   const invertir = prep.reduce((a, p) => a + p.costo, 0);
   const cobrar = prep.reduce((a, p) => a + p.venta, 0);

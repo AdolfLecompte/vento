@@ -54,7 +54,17 @@ export async function migrate(db: SQLiteDatabase) {
   // v2: product categories. Older databases get the column added once.
   const cols = await db.getAllAsync<{ name: string }>('PRAGMA table_info(productos)');
   if (!cols.some((c) => c.name === 'categoria')) await db.execAsync('ALTER TABLE productos ADD COLUMN categoria TEXT');
+  // v4: lines of undelivered orders follow the product's cost (see actualizarCostoPendientes). Bring the existing ones in line once.
+  if ((await getAjuste(db, 'costos_al_dia', '0')) !== '1') {
+    await db.execAsync('UPDATE pedido_items SET costo_unit=(SELECT costo FROM productos WHERE id=producto_id) WHERE pedido_id IN (SELECT id FROM pedidos WHERE entregado=0)');
+    await setAjuste(db, 'costos_al_dia', '1');
+  }
 }
+
+// An undelivered order isn't bought yet, so when a product's cost changes its lines take the new cost (delivered orders keep
+// theirs: that is what they really cost). Home's expected profit and "To prepare" then use the same number.
+export const actualizarCostoPendientes = (db: SQLiteDatabase, producto: number, costo: number) =>
+  db.runAsync('UPDATE pedido_items SET costo_unit=? WHERE producto_id=? AND costo_unit<>? AND pedido_id IN (SELECT id FROM pedidos WHERE entregado=0)', costo, producto, costo);
 
 const PEDIDO_SELECT = `
   SELECT p.id, p.fecha, p.entregado, c.nombre AS cliente,
@@ -88,12 +98,11 @@ export const listClientes = (db: SQLiteDatabase) =>
 
 // What the orders dated in [desde, hasta] need, per product: units, how many are still undelivered, what it costs (the
 // money to put in) and what it sells for. Delivered orders stay in so the batch total does not shrink as you deliver.
-// Undelivered units are not bought yet, so they cost what the product costs today, not the cost saved with the order.
 export const porPrepararPorProducto = (db: SQLiteDatabase, desde: string, hasta: string) =>
   db.getAllAsync<{ nombre: string; unidades: number; pendientes: number; costo: number; venta: number }>(
     `SELECT pr.nombre, SUM(i.cantidad) AS unidades,
        SUM(CASE WHEN p.entregado=0 THEN i.cantidad ELSE 0 END) AS pendientes,
-       SUM(CASE WHEN p.entregado=0 THEN i.cantidad*pr.costo ELSE i.cantidad*i.costo_unit END) AS costo,
+       SUM(i.cantidad*i.costo_unit) AS costo,
        SUM(i.cantidad*i.precio_unit) AS venta
      FROM pedido_items i JOIN productos pr ON pr.id=i.producto_id JOIN pedidos p ON p.id=i.pedido_id
      WHERE p.fecha >= ? AND p.fecha <= ? GROUP BY pr.id ORDER BY costo DESC, pr.nombre`,
@@ -152,17 +161,9 @@ export async function getAjuste(db: SQLiteDatabase, clave: string, def: string) 
 export const setAjuste = (db: SQLiteDatabase, clave: string, valor: string) =>
   db.runAsync('INSERT INTO ajustes(clave, valor) VALUES(?,?) ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor', clave, valor);
 
-// Clients with money pending, biggest debt first (used by the reminder). Counted per order: an order paid
-// too much never cancels what the same client still owes on another one. Only delivered orders count: nothing is
-// owed for something not handed over yet.
-export const listDeudores = (db: SQLiteDatabase) =>
-  db.getAllAsync<{ nombre: string; debe: number }>(
-    `SELECT c.nombre, SUM(MAX(0, t.total - t.pagado)) AS debe FROM clientes c
-     JOIN (SELECT p.cliente_id,
-       COALESCE((SELECT SUM(cantidad*precio_unit) FROM pedido_items WHERE pedido_id=p.id),0) AS total,
-       COALESCE((SELECT SUM(monto) FROM pagos WHERE pedido_id=p.id),0) AS pagado FROM pedidos p WHERE p.entregado=1) t ON t.cliente_id=c.id
-     GROUP BY c.id HAVING debe > 0 ORDER BY debe DESC`,
-  );
+// Clients with money pending, biggest debt first (used by the reminder). The rule lives in listClientesConDeuda.
+export const listDeudores = async (db: SQLiteDatabase) =>
+  (await listClientesConDeuda(db)).filter((c) => c.debe > 0).map((c) => ({ nombre: c.nombre, debe: c.debe })).sort((a, b) => b.debe - a.debe);
 
 // Clients with undelivered orders and how many, most first (used by the reminder).
 export const listPorEntregar = (db: SQLiteDatabase) =>
